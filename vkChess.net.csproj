@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFrameworks>net471;netcoreapp2.2</TargetFrameworks>        
+        <EnableDefaultNoneItems>false</EnableDefaultNoneItems>   
+        <OutputPath>$(SolutionDir)build\$(Configuration)\</OutputPath>          
+    </PropertyGroup>
+    
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">          
+        <DebugType>full</DebugType>
+        <DefineConstants>TRACE;DEBUG;NET471</DefineConstants>
+        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    </PropertyGroup>
+
+    <ItemGroup>    
+        <GLSLShader Include="shaders\**\*.frag;shaders\**\*.vert;shaders\**\*.comp;shaders\**\*.geom" />
+        <None Include="data\**\*.*">      
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>data\%(RecursiveDir)%(Filename)%(Extension)</Link>
+        </None>        
+        <None Include="ui\**\*.*">      
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>            
+        </None>         
+    </ItemGroup>    
+    
+    <ItemGroup>
+        <PackageReference Include="Crow.VK" Version="0.9.0-beta" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\vk.net\vke\CVKL.csproj" />
+    </ItemGroup>
+    <Import Project="$(SolutionDir)spirv.targets" />        
+</Project>

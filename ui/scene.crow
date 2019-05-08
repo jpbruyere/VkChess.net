@@ -1,0 +1,38 @@
+﻿<?xml version="1.0"?>
+<Window Caption="Scene" Icon="#deferred.crow.svg" Left="10" Top="100" Width="40%" Height="40%" CornerRadius="10">
+    <TreeView Data="{Scenes}" Width="Stretched">
+        <ItemTemplate DataType="Scene" Data="GetNodes">
+            <Expandable Caption="{Name}" Template="ui/sceneItem.crow" IsExpanded="{²IsExpanded}">
+                <HorizontalStack Height="Fit">
+                    <Widget Width="8" Height="10"/>
+                    <VerticalStack Height="Fit" Name="ItemsContainer"/>
+                </HorizontalStack>
+            </Expandable>                
+        </ItemTemplate>
+        <ItemTemplate DataType="Node" Data="Children">
+            <Expandable Caption="{Name}" IsExpanded="{²IsExpanded}">
+                <Template>
+                    <VerticalStack>
+                        <Border Style="TreeItemBorder" MouseDoubleClick="./onClickForExpand">
+                            <HorizontalStack Spacing="5">
+                                <Image Margin="1" Width="10" Height="10" Focusable="true" MouseDown="./onClickForExpand"
+                                    Path="{./Image}"
+                                    Visible="{./IsExpandable}"
+                                    SvgSub="{./IsExpanded}"
+                                    MouseEnter="{Background=LightGrey}"
+                                    MouseLeave="{Background=Transparent}"/>                                
+                                <Label Text="{./Caption}"/>                                
+                            </HorizontalStack>
+                        </Border>
+                        <Container Name="Content" Visible="false"/>
+                    </VerticalStack>                        
+                </Template>>
+                <HorizontalStack Height="Fit">
+                    <Widget Width="8" Height="10"/>
+                    <VerticalStack Height="Fit" Name="ItemsContainer"/>                    
+                </HorizontalStack>
+            </Expandable>                
+        </ItemTemplate>
+    </TreeView>                        
+</Window>
+

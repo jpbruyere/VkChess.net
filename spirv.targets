@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)spirv.xml" />
+    <AvailableItemName Include="GLSLShader">
+      <Targets>DXC</Targets>
+    </AvailableItemName>
+  </ItemGroup>
+  <Target Name="AfterBuild">
+    <Copy SourceFiles="@(Datas)" DestinationFiles="@(Datas->'$(SolutionDir)build\$(Configuration)\samples\data\%(RelativeDir)%(Filename)%(Extension)')"/>
+  </Target>
+  <Target Name="CompileShaders" BeforeTargets="Build">        
+    <Message Importance="High" Text="Compiling shaders to spirv with glslc" />
+    <MakeDir Directories="$(OutputPath)%(GLSLShader.RelativeDir)"/>
+    <Exec Command="glslc %(GLSLShader.Identity) -o $(OutputPath)%(RelativeDir)%(Filename)%(Extension).spv"
+          ConsoleToMSBuild="true" EchoOff="true">
+        <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+    </Exec>
+  </Target>
+</Project>
