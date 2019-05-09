@@ -259,8 +259,7 @@ void main()
         vec3 color = NdotL * lights[i].color.rgb * (diffuseContrib + specContrib);
 
         // Calculate lighting contribution from image based lighting source (IBL)
-        colors += shadowFactor * (color + getIBLContribution(pbrInputs, n, reflection));
-        
+        colors += shadowFactor * (color + getIBLContribution(pbrInputs, n, reflection));        
         
     }
     colors /= NUM_LIGHTS;

@@ -61,11 +61,11 @@ namespace vkChess {
         };
         public Light[] lights = {
             new Light {
-                position = new Vector4(2.5f,5.5f,2,0f),
+                position = new Vector4(2.5f,10.5f,2,0f),
                 color = new Vector4(1,0.8f,0.8f,1)
             },
             new Light {
-                position = new Vector4(-2.5f,5.5f,2,0f),
+                position = new Vector4(-2.5f,10.5f,2,0f),
                 color = new Vector4(0.8f,0.8f,1,1)
             }
         };
@@ -117,7 +117,7 @@ namespace vkChess {
 
             uboMatrices = new HostBuffer (dev, VkBufferUsageFlags.UniformBuffer, matrices, true);
             uboLights = new HostBuffer<Light> (dev, VkBufferUsageFlags.UniformBuffer, lights, true);
-            shadowMapRenderer = new ShadowMapRenderer (dev, this);
+            shadowMapRenderer = new ShadowMapRenderer (dev, this, 32);
 
             init (nearPlane, farPlane);
         }
@@ -249,8 +249,8 @@ namespace vkChess {
             cfg.AddVertexAttributes (0, VkFormat.R32g32b32Sfloat, VkFormat.R32g32b32Sfloat, VkFormat.R32g32Sfloat, VkFormat.R32g32Sfloat);
 
             if (DRAW_INSTACED) {
-                cfg.AddVertexBinding<Matrix4x4>(1, VkVertexInputRate.Instance);
-                cfg.AddVertexAttributes(1, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat);
+                cfg.AddVertexBinding<VkChess.InstanceData>(1, VkVertexInputRate.Instance);
+                cfg.AddVertexAttributes(1, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat);
             }
 
             using (SpecializationInfo constants = new SpecializationInfo (
@@ -355,6 +355,7 @@ namespace vkChess {
                 gBuffPipeline.Bind(cmd);
                 model.Bind(cmd);
                 if (DRAW_INSTACED) {
+                    if (instanceBuf != null)
                     model.Draw(cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
                 } else if (mainScene != null)
                     model.Draw(cmd, gBuffPipeline.Layout, mainScene);

@@ -8,18 +8,10 @@ layout (location = 1) in vec3 inColor;
 
 layout (location = 0) out vec3 outColor;
 
-layout (binding = 0) uniform UBO 
-{
-    mat4 projectionMatrix;
-    mat4 viewMatrix;
-    mat4 modelMatrix;    
-    float gamma;
-    float exposure;    
-} ubo;
-
 layout(push_constant) uniform PushConsts {
-    mat4 projectionMatrix;
-} pc;
+    mat4 projection;
+    mat4 view;
+};
 
 out gl_PerVertex 
 {
@@ -28,7 +20,7 @@ out gl_PerVertex
 
 void main() 
 {
-    outColor = inColor;
-    
-	gl_Position = pc.projectionMatrix * vec4 ((ubo.viewMatrix * vec4(inPos.xyz, 0.0)).xyz, 1);
+    outColor = inColor;    
+	//gl_Position = projection * vec4 ((view * vec4(inPos.xyz, 0.0)).xyz, 1);
+	gl_Position = projection * view * vec4(inPos.xyz, 1);
 }

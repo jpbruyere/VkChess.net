@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>net471;netcoreapp2.2</TargetFrameworks>        
+        <!--<TargetFrameworks>net471;netcoreapp2.2</TargetFrameworks>        -->
+        <TargetFrameworks>net471</TargetFrameworks>        
         <EnableDefaultNoneItems>false</EnableDefaultNoneItems>   
         <OutputPath>$(SolutionDir)build\$(Configuration)\</OutputPath>          
     </PropertyGroup>
@@ -15,6 +16,12 @@
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     </PropertyGroup>
+    
+    <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+      <Reference Include="System" />
+      <Reference Include="System.Data" />              
+      <Reference Include="System.Data.Linq" />
+    </ItemGroup>
 
     <ItemGroup>    
         <GLSLShader Include="shaders\**\*.frag;shaders\**\*.vert;shaders\**\*.comp;shaders\**\*.geom" />
@@ -33,6 +40,9 @@
     
     <ItemGroup>
       <ProjectReference Include="..\vk.net\vke\CVKL.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="DebuDrawPipeline.cs" />
     </ItemGroup>
     <Import Project="$(SolutionDir)spirv.targets" />        
 </Project>

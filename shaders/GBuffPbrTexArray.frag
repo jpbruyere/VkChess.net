@@ -48,6 +48,7 @@ layout (location = 0) in vec3 inWorldPos;
 layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inUV0;
 layout (location = 3) in vec2 inUV1;
+layout (location = 4) in vec4 inColor;
 
 layout (set = 0, binding = 5) uniform UBOMaterials {
     Material materials[MAT_COUNT];
@@ -186,6 +187,8 @@ void main()
         baseColor = vec4(mix(baseColorDiffusePart, baseColorSpecularPart, metallic * metallic), diffuse.a);
 
     }        
+    
+    baseColor *= inColor;
     
     const float u_OcclusionStrength = 1.0f;
     const float u_EmissiveFactor = 1.0f;

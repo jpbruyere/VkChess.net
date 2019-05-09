@@ -2,6 +2,7 @@
 using Glfw;
 using VK;
 using System.Threading;
+using System.Numerics;
 
 namespace Crow {
 	public class CrowWin : CVKL.VkWindow, IValueChange {
@@ -25,6 +26,8 @@ namespace Crow {
 		protected CVKL.Image uiImage;
 		protected bool isRunning;
 
+		protected CVKL.DebugDrawPipeline plDebugDraw;
+
 		protected CrowWin (bool debugMarkers = false, string name = "CrowWin", uint _width = 1024, uint _height = 768, bool vSync = false) :
 			base (debugMarkers, name, _width, _height, vSync) {
 
@@ -39,6 +42,16 @@ namespace Crow {
             initUISurface ();
 
 			initUIPipeline ();
+
+			plDebugDraw = new CVKL.DebugDrawPipeline (uiPipeline.RenderPass);
+			plDebugDraw.AddLine (Vector3.Zero, Vector3.UnitX, 1, 0, 0);
+			plDebugDraw.AddLine (Vector3.Zero, Vector3.UnitY, 0, 1, 0);
+			plDebugDraw.AddLine (Vector3.Zero, Vector3.UnitZ, 0, 0, 1);
+
+			plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 1, 0, 1);
+			plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 1, 1, 1);
+			plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 1, 1, 0);
+			plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 0, 1, 1);
 		}
 
 		protected override void render () {
@@ -136,20 +149,24 @@ namespace Crow {
 
 				recordDraw (cmd, i);
 
+				uiImage.SetLayout (cmd, VkImageAspectFlags.Color, VkImageLayout.ColorAttachmentOptimal, VkImageLayout.ShaderReadOnlyOptimal,
+					VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.FragmentShader);
+
 				uiPipeline.RenderPass.Begin (cmd, uiFrameBuffers[i]);
 
 				uiPipeline.Bind (cmd);
 				cmd.BindDescriptorSet (uiPipeline.Layout, dsCrow);
 
-				uiImage.SetLayout (cmd, VkImageAspectFlags.Color, VkImageLayout.ColorAttachmentOptimal, VkImageLayout.ShaderReadOnlyOptimal,
-					VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.FragmentShader);
 
 				cmd.Draw (3, 1, 0, 0);
 
+
+				plDebugDraw.RecordDraw (cmd, uiFrameBuffers[i], vkChess.VkChess.curRenderer.matrices.projection, vkChess.VkChess.curRenderer.matrices.view);
+
+				uiPipeline.RenderPass.End (cmd);
+
 				uiImage.SetLayout (cmd, VkImageAspectFlags.Color, VkImageLayout.ShaderReadOnlyOptimal, VkImageLayout.ColorAttachmentOptimal,
 					VkPipelineStageFlags.FragmentShader, VkPipelineStageFlags.BottomOfPipe);
-					
-				uiPipeline.RenderPass.End (cmd);
 
 				cmds[i].End ();
 			}
@@ -246,6 +263,7 @@ namespace Crow {
 					uiPipeline.Dispose ();
 					descLayout.Dispose ();
 					descriptorPool.Dispose ();
+					plDebugDraw.Dispose ();
 
 					uiImage?.Dispose ();
 					while (crow != null)

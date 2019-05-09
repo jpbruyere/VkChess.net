@@ -138,10 +138,6 @@ namespace vkChess {
                 } else
                     renderer.model.Draw(cmd, shadowPipeline.Layout, renderer.mainScene);
             }
-            if (renderer.model != null && renderer.mainScene != null) {
-				renderer.model.Bind (cmd);
-				renderer.model.Draw (cmd, shadowPipeline.Layout, renderer.mainScene, true);
-			}
 
 			shadowPass.End (cmd);
 
