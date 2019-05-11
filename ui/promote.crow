@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<Container>
+	<Border Fit="True"
+			BorderWidth="1" CornerRadius="5" Background="0.4,0.4,0.4,0.8">
+		<VerticalStack Fit="True" Margin="30">
+			<Button Caption="Queen"	MouseClick="onPromoteToQueenClick"/>
+			<Button Caption="Bishop" MouseClick="onPromoteToBishopClick"/>
+			<Button Caption="Rook" MouseClick="onPromoteToRookClick"/>
+			<Button Caption="Knight" MouseClick="onPromoteToKnightClick"/>
+		</VerticalStack>
+	</Border>
+</Container>
+

@@ -1,0 +1,6 @@
+﻿<?xml version="1.0"?>
+<Window Font="droid bold, 10" Caption="Mini Board" Width="350" Height="350" HorizontalAlignment="Right" Top="300">	
+	<Container>
+		<BoardWidget Margin="1" Board="{board}" Font="droid, 10" />	
+	</Container>
+</Window>

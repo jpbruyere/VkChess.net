@@ -31,7 +31,7 @@ namespace vkChess {
             shadowMap
         }
 
-        public static bool EnableTextureArray = false;
+        public static bool TEXTURE_ARRAY = false;
 
         public DebugView currentDebugView = DebugView.none;
         public int lightNumDebug = 0;
@@ -59,18 +59,28 @@ namespace vkChess {
             exposure = 2.0f,
             scaleIBLAmbient = 0.5f,
         };
-        public Light[] lights = {
-            new Light {
-                position = new Vector4(2.5f,10.5f,2,0f),
-                color = new Vector4(1,0.8f,0.8f,1)
-            },
-            new Light {
-                position = new Vector4(-2.5f,10.5f,2,0f),
-                color = new Vector4(0.8f,0.8f,1,1)
-            }
-        };
+		//public Light[] lights = {
+		//    new Light {
+		//        position = new Vector4(3.5f,12.5f,2,0f),
+		//        color = new Vector4(1,0.8f,0.8f,1)
+		//    },
+		//    new Light {
+		//        position = new Vector4(-3.5f,12.5f,2,0f),
+		//        color = new Vector4(0.8f,0.8f,1,1)
+		//    }
+		//};
+		public Light [] lights = {
+			new Light {
+				position = new Vector4(5.5f,12.5f,2,0f),
+				color = new Vector4(1,1,1,1)
+			},
+			new Light {
+				position = new Vector4(-5.5f,12.5f,-2,0f),
+				color = new Vector4(1,1,1,1)
+			}
+		};
 
-        const float lightMoveSpeed = 0.1f;
+		const float lightMoveSpeed = 0.1f;
 
         Framebuffer[] frameBuffers;
         Image gbColorRough, gbEmitMetal, gbN_AO, gbPos, hdrImg;
@@ -196,7 +206,7 @@ namespace vkChess {
             descLayoutMain.Bindings.Add (new VkDescriptorSetLayoutBinding (6, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler));
 
 
-            if (EnableTextureArray) {
+            if (TEXTURE_ARRAY) {
                 descLayoutMain.Bindings.Add (new VkDescriptorSetLayoutBinding (7, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler));//texture array
             } else { 
                 descLayoutTextures = new DescriptorSetLayout (dev,
@@ -223,7 +233,7 @@ namespace vkChess {
                 cfg.multisampleState.minSampleShading = 0.5f;
             }
             cfg.Cache = pipelineCache;
-            if (EnableTextureArray) 
+            if (TEXTURE_ARRAY) 
                 cfg.Layout = new PipelineLayout (dev, descLayoutMain, descLayoutGBuff);
              else 
                 cfg.Layout = new PipelineLayout (dev, descLayoutMain, descLayoutGBuff, descLayoutTextures);
@@ -262,7 +272,7 @@ namespace vkChess {
                 else
                     cfg.AddShader(VkShaderStageFlags.Vertex, "shaders/GBuffPbr.vert.spv");
 
-                if (EnableTextureArray) 
+                if (TEXTURE_ARRAY) 
                     cfg.AddShader (VkShaderStageFlags.Fragment, "shaders/GBuffPbrTexArray.frag.spv", constants);
                 else
                     cfg.AddShader (VkShaderStageFlags.Fragment, "shaders/GBuffPbr.frag.spv", constants);
@@ -316,7 +326,7 @@ namespace vkChess {
             dev.WaitIdle ();
             model?.Dispose ();
 
-            if (EnableTextureArray) {
+            if (TEXTURE_ARRAY) {
                 model = new PbrModelTexArray (transferQ, path);
 
                 DescriptorSetWrites uboUpdate = new DescriptorSetWrites (dsMain, descLayoutMain.Bindings[5], descLayoutMain.Bindings[7]);
@@ -406,7 +416,8 @@ namespace vkChess {
             );
 
             uboMatrices.Update (matrices, (uint)Marshal.SizeOf<Matrices> ());
-        }
+			shadowMapRenderer.updateShadowMap = true;
+		}
 
         #endregion
 

@@ -27,11 +27,12 @@
         <GLSLShader Include="shaders\**\*.frag;shaders\**\*.vert;shaders\**\*.comp;shaders\**\*.geom" />
         <None Include="data\**\*.*">      
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>data\%(RecursiveDir)%(Filename)%(Extension)</Link>
+<!--            <Link>data\%(RecursiveDir)%(Filename)%(Extension)</Link>-->
         </None>        
         <None Include="ui\**\*.*">      
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>            
-        </None>         
+        </None>  
+		<EmbeddedResource Include="ui\*.style" />		
     </ItemGroup>    
     
     <ItemGroup>
@@ -43,6 +44,9 @@
     </ItemGroup>
     <ItemGroup>
       <Compile Remove="DebuDrawPipeline.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Remove="ui\chess.style" />
     </ItemGroup>
     <Import Project="$(SolutionDir)spirv.targets" />        
 </Project>

@@ -50,7 +50,7 @@ namespace CVKL
 		/// </summary>
 		protected int delayFinishMs = 0;
         public static List<Animation> AnimationList = new List<Animation>();
-
+		public static bool HasAnimations => AnimationList.Count > 0;
         //public FieldInfo member;
         public Object AnimatedInstance;
 

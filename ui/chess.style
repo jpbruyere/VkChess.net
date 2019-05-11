@@ -59,3 +59,13 @@ NormalizedFloat {
     Width="60";
     Foreground="Black";
 }
+CheckBox {
+	Template = "ui/checkBox.tmp";
+	Height= "Fit";
+	Width = "80";
+}
+Button {
+	Template = "ui/Button.tmp";
+	Height = "Fit";
+	Width = "80";
+}

@@ -69,19 +69,24 @@ namespace vkChess {
 				new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Geometry, VkDescriptorType.UniformBuffer));//lights
 
 			GraphicPipelineConfig cfg = GraphicPipelineConfig.CreateDefault (VkPrimitiveTopology.TriangleList);
-			cfg.rasterizationState.cullMode = VkCullModeFlags.Back;
+			cfg.rasterizationState.cullMode = VkCullModeFlags.Front;
 			cfg.rasterizationState.depthBiasEnable = true;
 			cfg.dynamicStates.Add (VkDynamicState.DepthBias);
 
 			cfg.RenderPass = shadowPass;
 
 			cfg.Layout = new PipelineLayout (dev, descLayoutShadow);
-			cfg.Layout.AddPushConstants (
-				new VkPushConstantRange (VkShaderStageFlags.Geometry, (uint)Marshal.SizeOf<Matrix4x4> ())
-			);
 
 			cfg.AddVertexBinding<PbrModel.Vertex> (0);
 			cfg.AddVertexAttributes (0, VkFormat.R32g32b32Sfloat);
+
+			if (DRAW_INSTACED) {
+				cfg.AddVertexBinding<VkChess.InstanceData> (1, VkVertexInputRate.Instance);
+				cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 1, VkFormat.R32g32b32a32Sfloat, 16));
+				cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 2, VkFormat.R32g32b32a32Sfloat, 32));
+				cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 3, VkFormat.R32g32b32a32Sfloat, 48));
+				cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 4, VkFormat.R32g32b32a32Sfloat, 64));
+			}
 
 			cfg.AddShader (VkShaderStageFlags.Vertex, "shaders/shadow.vert.spv");
 			cfg.AddShader (VkShaderStageFlags.Geometry, "shaders/shadow.geom.spv");

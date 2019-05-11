@@ -1,11 +1,48 @@
 ﻿<?xml version="1.0"?>
-<Window Caption="Lighting" Icon="#deferred.crow.svg" Left="10" Top="1" Width="90%" Height="30%" CornerRadius="0">
-    <VerticalStack Spacing="1" Margin="10" CacheEnabled="true">     
+<Window Caption="Lighting" Icon="#deferred.crow.svg" Left="10" Top="1" Width="70%" Height="30%" CornerRadius="0">
+    <VerticalStack Spacing="1" Margin="10" >
+    	<HorizontalStack Height="Fit">
+    		<VerticalStack Spacing="3" Width="50%" >
+		    	<HorizontalStack Height="Fit">
+		    		<Label Width="Stretched" Text="Whites Level:"/>
+		    		<Spinner Width="60" Value="{²WhitesLevel}" Maximum="20" SmallIncrement="1"/>
+		    	</HorizontalStack>
+		    	<HorizontalStack Height="Fit">
+		    		<Label Width="Stretched" Text="Blacks Level:"/>
+		    		<Spinner Width="60" Value="{²BlacksLevel}" Maximum="20" SmallIncrement="1"/>
+		    	</HorizontalStack>
+		    	<HorizontalStack Height="Fit">
+		    		<Label Width="Stretched" Text="AI Search time in milliseconds:" />
+		    		<Spinner Width="60" Value="{²AISearchTime}" Maximum="10000" SmallIncrement="10"/>
+		    	</HorizontalStack>    
+		    	<CheckBox Caption="Whites are AI" IsChecked="{²WhitesAreAI}" Width="Stretched"/>
+		    	<CheckBox Caption="Blacks are AI" IsChecked="{²BlacksAreAI}" Width="Stretched"/>
+		    	<CheckBox Caption="Enable Hint" IsChecked="{²EnableHint}" Width="Stretched"/>    
+	    	</VerticalStack> 
+	    	<VerticalStack Spacing="1">
+		    	<HorizontalStack Height="Fit">
+		    		<Label Width="50%" Text="Pce Color"/>
+		    		<Label Width="Stretched" Text="{DebugCurColor}"/>
+		    	</HorizontalStack>	    		
+		    	<HorizontalStack Height="Fit">
+		    		<Label Width="50%" Text="Pce Type"/>
+		    		<Label Width="Stretched" Text="{DebugCurType}"/>
+		    	</HorizontalStack>	    		
+		    	<HorizontalStack Height="Fit">
+		    		<Label Width="50%" Text="Pce Cell"/>
+		    		<Label Width="Stretched" Text="{DebugCurCell}"/>
+		    	</HorizontalStack>	    		
+		    	<HorizontalStack Height="Fit">
+		    		<Label Width="50%" Text="Pce Cell pos"/>
+		    		<Label Width="Stretched" Text="{DebugCurCellPos}"/>
+		    	</HorizontalStack>	 
+	    	</VerticalStack> 
+    	</HorizontalStack>
         <HorizontalStack Height="Fit" >
             <Label Text="Exposure:" Width="80"/>
             <Slider Height="10" Value="{²Exposure}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
             <Label Text="{Exposure}" Width="40" TextAlignment="Right" />
-        </HorizontalStack>
+        </HorizontalStack>        
         <HorizontalStack Height="Fit">
             <Label Text="Gamma:" Width="80" />
             <Slider Height="10" Value="{²Gamma}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
@@ -19,23 +56,7 @@
         <HorizontalStack Height="Fit">
             <Label Text="Selected Cell:" Width="200" />            
             <Label Text="{SelCell}" />
-        </HorizontalStack>            
-        <ListBox Name="dv" Data="{Lights}" Width="Stretched" Height="Fit">
-            <ItemTemplate>
-                <Border Height="Fit">
-                    <VerticalStack>
-                        <HorizontalStack>
-                            <Label Text="Position" Width="50"/>
-                            <Label Text="{position}"/>
-                        </HorizontalStack>
-                        <HorizontalStack>
-                            <Label Text="Color" Width="50"/>
-                            <Label Text="{color}"/>
-                        </HorizontalStack>
-                    </VerticalStack>                    
-                </Border>                    
-            </ItemTemplate>            
-        </ListBox>        
+        </HorizontalStack>                   
     </VerticalStack>
 </Window>
 

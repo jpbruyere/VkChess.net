@@ -27,7 +27,7 @@ layout (set = 0, binding = 4) uniform UBOLights {
 
 const float M_PI = 3.141592653589793;
 const float c_MinRoughness = 0.04;
-#define SHADOW_FACTOR 0.15
+#define SHADOW_FACTOR 0.25
 
 layout (input_attachment_index = 0, set = 1, binding = 0) uniform subpassInputMS samplerColorRough;
 layout (input_attachment_index = 1, set = 1, binding = 1) uniform subpassInputMS samplerEmitMetal;

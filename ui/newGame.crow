@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Window Font="droid bold, 40" Height="50%" Width="60%" Caption="New Game">
+	<Container>
+		<VerticalStack Margin="30" Spacing="5">
+			<HorizontalStack Height="80%" Margin="3">
+				<Border Width="50%" Margin="10" CornerRadius="5" Focusable="true"
+					MouseEnter="{Background=SteelBlue}"
+					MouseLeave="{Background=Transparent}"
+					MouseClick="onNewWhiteGame">
+					<Image Margin="5"
+						Path="data/Pieces.svg" SvgSub="bq"/>
+				</Border>
+				<Border Width="50%" Margin="10" CornerRadius="5" Focusable="true"
+					MouseEnter="{Background=SteelBlue}"
+					MouseLeave="{Background=Transparent}"
+					MouseClick="onNewBlackGame">
+					<Image Margin="5"
+						Path="data/Pieces.svg" SvgSub="br"/>
+				</Border>
+			</HorizontalStack>
+			<Button Height="Fit" Width="40%" Style="#Chess.gui.Button.style" HorizontalAlignment="Right" Caption="Cancel"
+				MouseClick="../../../butQuitPress"/>
+		</VerticalStack>
+	</Container>
+</Window>
+

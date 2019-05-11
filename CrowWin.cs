@@ -26,7 +26,7 @@ namespace Crow {
 		protected CVKL.Image uiImage;
 		protected bool isRunning;
 
-		protected CVKL.DebugDrawPipeline plDebugDraw;
+		//protected CVKL.DebugDrawPipeline plDebugDraw;
 
 		protected CrowWin (bool debugMarkers = false, string name = "CrowWin", uint _width = 1024, uint _height = 768, bool vSync = false) :
 			base (debugMarkers, name, _width, _height, vSync) {
@@ -43,15 +43,15 @@ namespace Crow {
 
 			initUIPipeline ();
 
-			plDebugDraw = new CVKL.DebugDrawPipeline (uiPipeline.RenderPass);
-			plDebugDraw.AddLine (Vector3.Zero, Vector3.UnitX, 1, 0, 0);
-			plDebugDraw.AddLine (Vector3.Zero, Vector3.UnitY, 0, 1, 0);
-			plDebugDraw.AddLine (Vector3.Zero, Vector3.UnitZ, 0, 0, 1);
+			//plDebugDraw = new CVKL.DebugDrawPipeline (uiPipeline.RenderPass);
+			//plDebugDraw.AddLine (Vector3.Zero, Vector3.UnitX, 1, 0, 0);
+			//plDebugDraw.AddLine (Vector3.Zero, Vector3.UnitY, 0, 1, 0);
+			//plDebugDraw.AddLine (Vector3.Zero, Vector3.UnitZ, 0, 0, 1);
 
-			plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 1, 0, 1);
-			plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 1, 1, 1);
-			plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 1, 1, 0);
-			plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 0, 1, 1);
+			//plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 1, 0, 1);
+			//plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 1, 1, 1);
+			//plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 1, 1, 0);
+			//plDebugDraw.AddLine (Vector3.Zero, Vector3.Zero, 0, 1, 1);
 		}
 
 		protected override void render () {
@@ -138,6 +138,11 @@ namespace Crow {
 				System.Diagnostics.Debug.WriteLine (ex.ToString ());
 			}
 		}
+		protected void closeWindow (string path) {
+			Widget g = crow.FindByName (path);
+			if (g != null)
+				crow.DeleteWidget (g);
+		}
 		protected virtual void recordDraw (CVKL.CommandBuffer cmd, int imageIndex) { }
 
 		void buildCommandBuffers () {
@@ -161,7 +166,7 @@ namespace Crow {
 				cmd.Draw (3, 1, 0, 0);
 
 
-				plDebugDraw.RecordDraw (cmd, uiFrameBuffers[i], vkChess.VkChess.curRenderer.matrices.projection, vkChess.VkChess.curRenderer.matrices.view);
+				//plDebugDraw.RecordDraw (cmd, uiFrameBuffers[i], vkChess.VkChess.curRenderer.matrices.projection, vkChess.VkChess.curRenderer.matrices.view);
 
 				uiPipeline.RenderPass.End (cmd);
 
@@ -263,7 +268,7 @@ namespace Crow {
 					uiPipeline.Dispose ();
 					descLayout.Dispose ();
 					descriptorPool.Dispose ();
-					plDebugDraw.Dispose ();
+					//plDebugDraw.Dispose ();
 
 					uiImage?.Dispose ();
 					while (crow != null)

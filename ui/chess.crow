@@ -1,0 +1,30 @@
+﻿<?xml version="1.0"?>
+<HorizontalStack Height="Fit" Background="vgradient|0:Grey|0.2:Jet|0.8:Jet|1:Black" VerticalAlignment="Bottom" Margin="2">
+	<Menu>
+		<MenuItem Caption="File" Width="Fit">
+			<MenuItem Caption="New" />
+			<MenuItem Caption="Open"/>
+			<MenuItem Caption="Save"/>
+			<MenuItem Caption="Quit"/>
+		</MenuItem>
+		<MenuItem Caption="Help" Width="Fit">
+			<MenuItem Caption="About"/>
+			<MenuItem Caption="Help"/>
+		</MenuItem>
+	</Menu>
+	<CheckBox Caption="Hint" IsChecked="{²EnableHint}"/>   
+	<Button Caption="Undo" MouseClick="onUndoClick"/>
+	<Button Caption="New Game" MouseClick="onNewGameClick"/>
+	<HorizontalStack Fit="true" Background="Black" Margin="2">
+		<Label Text="State:" Width="40"/>
+		<Label Text="{CurrentState}" Width="60" TextAlignment="Center"/>		
+	</HorizontalStack >
+	<HorizontalStack Fit="true" Background="Black" Margin="2">
+		<Label Text="Hover:" Width="40"/>
+		<Label Font="droid bold, 10" Text="{SelCell}" Margin="1" Width="40" TextAlignment="Center"/>
+	</HorizontalStack>
+	
+	<Image Width="30" Height="20" Path="#Crow.Images.Icons.IconAlerte.svg" Visible="{StockfishNotFound}"/>
+	<Label Text="Stockfish not found" Font="droid bold, 10" Visible="{StockfishNotFound}"/>
+ 
+</HorizontalStack>

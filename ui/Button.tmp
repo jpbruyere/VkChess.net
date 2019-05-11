@@ -1,0 +1,5 @@
+﻿<?xml version="1.0"?>
+<Border Margin="0" Foreground="Jet" MouseEnter="{Foreground=White}" MouseLeave="{Foreground=Jet}"
+	MouseDown="{Background=0.1,0.3,0.9,0.3}" MouseUp="{Background=Transparent}">			
+	<Label Margin="4" Font="{./Font}" Foreground="{./Foreground}" Text="{./Caption}" />
+</Border>

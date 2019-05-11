@@ -49,19 +49,30 @@ namespace vkChess {
         static Vector4 blackColor = new Vector4(0.2f, 0.2f, 0.2f, 1f);
         static Vector4 whiteColor = new Vector4(1.0f, 1.0f, 1.0f, 1f);
         public static HostBuffer<VkChess.InstanceData> instanceBuff;
-        public static uint flushStart, flushEnd;
+		public static VkChess.InstanceData[] boardDatas;
+		public static uint flushStart, flushEnd;
+
         static uint nextInstanceIdx;
         float xAngle, zAngle;
         Vector3 position;
         public PieceType Type;
         public readonly ChessColor Player;
-        public readonly uint instanceIdx;
+        public uint instanceIdx;
 
         public bool IsPromoted;
         public bool HasMoved;
-        public bool Captured;
+        public bool Captured {
+			get { return BoardCell < 0; }
+			set {
+				if (value)
+					BoardCell = -1;
+				else
+					BoardCell = 0;
+			} 
+		}
 
-        public int initX, initY;
+
+		public int initX, initY;
 
         VkChess.InstanceData instData;
 
@@ -73,15 +84,17 @@ namespace vkChess {
             initY = line;
             position.X = initX;
             position.Y = initY;
+			BoardCell = new Crow.Point (col, line);
 
             instData = new VkChess.InstanceData(Player == ChessColor.White ? whiteColor : blackColor, Matrix4x4.Identity);
 
-            updatePos();
+			if (player == ChessColor.Black && type == PieceType.Knight)
+				zAngle = MathHelper.Pi;
+
+			updatePos ();
         }
 
-        public Crow.Point BoardCell {
-            get { return new Crow.Point((int)Math.Truncate(X), (int)Math.Truncate(Y)); }
-        }
+		public Crow.Point BoardCell;
 
         public Vector3 Position {
             get { return position; }
@@ -140,13 +153,13 @@ namespace vkChess {
         }
         static Vector3 centerDiff = new Vector3(3.5f, 0, 3.5f);
 
-        void updatePos() {
+        public void updatePos() {
             Quaternion q = Quaternion.CreateFromYawPitchRoll (zAngle, 0f, xAngle);
 			Vector3 pos = (new Vector3 (position.X, position.Z, 7f-position.Y) - centerDiff) * 2;
             instData.mat = Matrix4x4.CreateFromQuaternion(q) * Matrix4x4.CreateTranslation(pos);
-			UpdateBuff (instanceIdx, instData);
+			UpdateBuff (instanceIdx, ref instData);
         }
-		public static void UpdateBuff (uint instIdx, VkChess.InstanceData data) {
+		public static void UpdateBuff (uint instIdx, ref VkChess.InstanceData data) {
 			if (instanceBuff == null)
 				return;
 			instanceBuff.Update (instIdx, data);
@@ -159,9 +172,10 @@ namespace vkChess {
 			else if (flushEnd <= instIdx)
 				flushEnd = instIdx + 1;
 		}
-		public static void UpdateCase (int x, int y, float r, float g, float b) {
-			int index = 32 + y * 8 + x;
-			UpdateBuff ((uint)index, new VkChess.InstanceData (new Vector4(r,g,b,1), Matrix4x4.Identity));
+		public static void UpdateCase (int x, int y, Vector4 colorDiff) {
+			int index = y * 8 + x;
+			boardDatas[index].color += colorDiff;
+			UpdateBuff ((uint)index+32, ref boardDatas[index]);
 		}
 		public static void FlushHostBuffer () {
             if (flushEnd == 0)
@@ -179,15 +193,27 @@ namespace vkChess {
                         new BezierPath(
                             Position,
                             new Vector3(initX, initY, 0f), Vector3.UnitZ)));
-                else
-                    Position = new Vector3(initX, initY, 0f);
+                //else
+                //    Position = new Vector3(initX, initY, 0f);
             }
-            Unpromote();
+			if (IsPromoted)
+            	Unpromote();
             IsPromoted = false;
-            HasMoved = false;
-            Captured = false;
+            HasMoved = false;            
+			BoardCell = new Crow.Point (initX, initY);
         }
-        public void Promote(char prom, bool preview = false) {
+		public void MoveTo (Crow.Point newPos, bool animate = false) {
+			BoardCell = newPos;
+			if (animate) {
+				Animation.StartAnimation (new PathAnimation (this, "Position",
+					new BezierPath (
+					Position,
+					new Vector3 (newPos.X, newPos.Y, 0f), Vector3.UnitZ), VkChess.animationSteps),
+					0);
+			} //else
+			//	Position = new Vector3 (newPos.X, newPos.Y, 0f);
+		}
+		public void Promote(char prom, bool preview = false) {
             if (IsPromoted)
                 throw new Exception("trying to promote already promoted " + Type.ToString());
             if (Type != PieceType.Pawn)
@@ -209,11 +235,13 @@ namespace vkChess {
                 default:
                     throw new Exception("Unrecognized promotion");
             }
+			VkChess.updateInstanceCmds = true;
         }
         public void Unpromote() {
             IsPromoted = false;
             Type = PieceType.Pawn;
-        }
+			VkChess.updateInstanceCmds = true;
+		}
 
         string DebuggerDisplay => string.Format($"{Type}:{BoardCell.ToString()}");
     }
