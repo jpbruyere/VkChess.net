@@ -69,3 +69,6 @@ Button {
 	Height = "Fit";
 	Width = "80";
 }
+MenuItem {
+	Template = "ui/MenuItem.tmp";
+}

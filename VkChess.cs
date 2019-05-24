@@ -22,7 +22,10 @@ namespace vkChess
 		static void Main (string [] args) {
 			Instance.DEBUG_UTILS = false;
 			Instance.VALIDATION = false;
+			DeferredPbrRenderer.NUM_SAMPLES = VkSampleCountFlags.SampleCount4;
+			DeferredPbrRenderer.DRAW_INSTACED = true;
 			DeferredPbrRenderer.TEXTURE_ARRAY = true;
+
 			//Instance.RenderDocCapture = true;
 
 			using (VkChess app = new VkChess ())
@@ -35,6 +38,7 @@ namespace vkChess
 			enabled_features.samplerAnisotropy = available_features.samplerAnisotropy;
 			enabled_features.sampleRateShading = available_features.sampleRateShading;
 			enabled_features.geometryShader = available_features.geometryShader;
+			enabled_features.tessellationShader = available_features.tessellationShader;
 
 			enabled_features.textureCompressionBC = available_features.textureCompressionBC;
 		}
@@ -82,18 +86,13 @@ namespace vkChess
 			Configuration.Global.Set ("StockfishPath", "/usr/games/stockfish");
 
 			camera = new Camera (Utils.DegreesToRadians (45f), 1f, 0.1f, 32f);
-			camera.SetRotation (0.4f, 0, 0);
+			camera.SetRotation (0.6f, 0, 0);
 			camera.SetPosition (0, 0f, 12.0f);
 
-			DeferredPbrRenderer.NUM_SAMPLES = VkSampleCountFlags.SampleCount4;
-			DeferredPbrRenderer.DRAW_INSTACED = true;
-			DeferredPbrRenderer.TEXTURE_ARRAY = true;
-
-			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [3], camera.NearPlane, camera.FarPlane);
+			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [2], camera.NearPlane, camera.FarPlane);
 			dev.WaitIdle ();
 			renderer.LoadModel (transferQ, modelPathes [0]);
 			camera.Model = Matrix4x4.CreateScale (0.5f);// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
-
 
 			UpdateFrequency = 8;
 
@@ -102,8 +101,8 @@ namespace vkChess
 			crow.Load ("ui/chess.crow").DataSource = this;
 
 			initBoard ();
-			//initInterface();
 			initStockfish ();
+
 			CurrentState = GameState.Play;
 		}
 
@@ -373,15 +372,21 @@ namespace vkChess
 		}
 
 		void onUndoClick (object sender, MouseButtonEventArgs e) {
+			bool hintIsEnabled = EnableHint;
+			EnableHint = false;
+
 			GameState lastState = currentState;
-			if ((currentState != GameState.Pad && currentState != GameState.Checkmate) || !playerIsAi(CurrentPlayer))//undo ai move
-				undoLastMove ();
+			if ((currentState != GameState.Pad && currentState != GameState.Checkmate) || !playerIsAi (CurrentPlayer))//undo ai move
+				undoLastMove ();			
+			
 			undoLastMove ();
 			//to have checkColor removed
 			currentState = lastState;
 			CurrentState = GameState.Play;
 			startTurn ();
 			NotifyValueChanged ("board", board);
+
+			EnableHint = hintIsEnabled;
 		}
 		void onNewGameClick (object sender, MouseButtonEventArgs e) {
 			loadWindow ("ui/newGame.crow", this);
@@ -770,11 +775,13 @@ namespace vkChess
 				if (currentState == value)
 					return;
 
-				if (currentState == GameState.Checked || currentState == GameState.Checkmate) {
+				if (currentState == GameState.Checked) {
 					Point kPos = CurrentPlayerPieces.First (p => p.Type == PieceType.King).BoardCell;
 					Piece.UpdateCase (kPos.X, kPos.Y, -kingCheckedColor);
+				} else if (currentState == GameState.Checkmate) {
+					Point kPos = OpponentPieces.First (p => p.Type == PieceType.King).BoardCell;
+					Piece.UpdateCase (kPos.X, kPos.Y, -kingCheckedColor);
 				}
-
 				currentState = value;
 
 				if ((int)currentState > 2) {
@@ -1465,16 +1472,27 @@ namespace vkChess
 
 			replaySilently ();
 
+			Piece pCaptured = board [pCurPos.X, pCurPos.Y];
+
 			p.MoveTo (pPreviousPos, true);
 
-			syncStockfish ();
+			if (p.Type == PieceType.King){
+				int difX = pCurPos.X - pPreviousPos.X;
+				if (Math.Abs (difX) == 2) {
+					//rocking
+					int y = p.Player == ChessColor.White ? 0 : 7;
+					Piece rook = difX > 0 ? board [7, y] : board [0, y];
+					rook.MoveTo (new Point (difX > 0 ? 7 : 0, y), true);
+				}
+			}
+
+//			syncStockfish ();
 
 			//animate undo capture
-			Piece pCaptured = board [pCurPos.X, pCurPos.Y];
 			if (pCaptured == null)
 				return;
-			Vector3 pCapLastPos = pCaptured.Position;
-			pCaptured.Position = getCurrentCapturePosition (pCaptured);
+			Vector3 pCapLastPos = new Vector3 (pCaptured.BoardCell.X, pCaptured.BoardCell.Y, 0);
+			//pCaptured.Position = getCurrentCapturePosition (pCaptured);
 
 			Animation.StartAnimation (new PathAnimation (pCaptured, "Position",
 				new BezierPath (

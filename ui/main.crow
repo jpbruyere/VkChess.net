@@ -12,7 +12,7 @@
 		    		<Spinner Width="60" Value="{²BlacksLevel}" Maximum="20" SmallIncrement="1"/>
 		    	</HorizontalStack>
 		    	<HorizontalStack Height="Fit">
-		    		<Label Width="Stretched" Text="AI Search time in milliseconds:" />
+		    		<Label Width="Stretched" Text="AI Search time (ms):" />
 		    		<Spinner Width="60" Value="{²AISearchTime}" Maximum="10000" SmallIncrement="10"/>
 		    	</HorizontalStack>    
 		    	<CheckBox Caption="Whites are AI" IsChecked="{²WhitesAreAI}" Width="Stretched"/>
