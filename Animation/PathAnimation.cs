@@ -21,7 +21,7 @@
 using System;
 using System.Numerics;
 
-namespace CVKL
+namespace vke
 {
 	public class PathAnimation : Animation<Vector3>
 	{		

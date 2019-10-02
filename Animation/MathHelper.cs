@@ -24,7 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-namespace CVKL {
+namespace vke {
     public static class MathHelper {
         public const float Pi = (float)Math.PI;
         public const float TwoPi = (float)Math.PI * 2;

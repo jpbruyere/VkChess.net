@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace CVKL {
+namespace vke {
     public class Path 
 	{
 		public Vector3 Start;

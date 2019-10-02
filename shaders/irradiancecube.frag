@@ -33,5 +33,5 @@ void main()
 			sampleCount++;
 		}
 	}
-	outColor = vec4(PI * color / float(sampleCount), 1.0);//texture(samplerEnv, inPos).rgba;
+	outColor = vec4(PI * color / float(sampleCount), 1.0);
 }

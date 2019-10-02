@@ -6,8 +6,9 @@
 using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using CVKL;
-using VK;
+using vke;
+using vke.glTF;
+using Vulkan;
 using static vkChess.DeferredPbrRenderer;
 
 namespace vkChess {
@@ -26,7 +27,7 @@ namespace vkChess {
 
 
 		RenderPass shadowPass;
-		Framebuffer fbShadowMap;
+		FrameBuffer fbShadowMap;
 		public Image shadowMap { get; private set; }
 		Pipeline shadowPipeline;
 		DescriptorPool descriptorPool;
@@ -77,7 +78,7 @@ namespace vkChess {
 
 			cfg.Layout = new PipelineLayout (dev, descLayoutShadow);
 
-			cfg.AddVertexBinding<PbrModel.Vertex> (0);
+			cfg.AddVertexBinding<PbrModelTexArray.Vertex> (0);
 			cfg.AddVertexAttributes (0, VkFormat.R32g32b32Sfloat);
 
 			if (DRAW_INSTACED) {
@@ -100,7 +101,7 @@ namespace vkChess {
 			shadowMap.CreateSampler (VkSamplerAddressMode.ClampToBorder);
 			shadowMap.Descriptor.imageLayout = VkImageLayout.DepthStencilReadOnlyOptimal;
 
-			fbShadowMap = new Framebuffer (shadowPass, SHADOWMAP_SIZE, SHADOWMAP_SIZE, (uint)renderer.lights.Length);
+			fbShadowMap = new FrameBuffer (shadowPass, SHADOWMAP_SIZE, SHADOWMAP_SIZE, (uint)renderer.lights.Length);
 			fbShadowMap.attachments.Add (shadowMap);
 			fbShadowMap.Activate ();
 
@@ -120,7 +121,7 @@ namespace vkChess {
 			dev.WaitIdle ();
 		}
 
-		public void update_shadow_map (CommandPool cmdPool, CVKL.Buffer instanceBuf, params Model.InstancedCmd[] instances) {
+		public void update_shadow_map (CommandPool cmdPool, vke.Buffer instanceBuf, params Model.InstancedCmd[] instances) {
             update_light_matrices ();
 
 			CommandBuffer cmd = cmdPool.AllocateAndStart ();

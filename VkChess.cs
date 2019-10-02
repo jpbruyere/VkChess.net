@@ -4,11 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Threading;
 using Crow;
-using CVKL;
+using vke;
+using vke.glTF;
 using Glfw;
-using VK;
+using Vulkan;
 
 namespace vkChess
 {
@@ -20,13 +20,20 @@ namespace vkChess
 	public class VkChess : CrowWin
 	{
 		static void Main (string [] args) {
-			Instance.DEBUG_UTILS = false;
-			Instance.VALIDATION = false;
+			//Instance.DEBUG_UTILS = true;
+			//Instance.VALIDATION = true;
+			//Instance.RENDER_DOC_CAPTURE = true;
+
 			DeferredPbrRenderer.NUM_SAMPLES = VkSampleCountFlags.SampleCount4;
 			DeferredPbrRenderer.DRAW_INSTACED = true;
 			DeferredPbrRenderer.TEXTURE_ARRAY = true;
+			DeferredPbrRenderer.MAX_MATERIAL_COUNT = 5;
+			DeferredPbrRenderer.MRT_FORMAT = VkFormat.R16g16b16a16Sfloat;
+			DeferredPbrRenderer.HDR_FORMAT = VkFormat.R16g16b16a16Sfloat;
+			PbrModelTexArray.TEXTURE_DIM = 512;
+			ShadowMapRenderer.SHADOWMAP_SIZE = 1024;
 
-			//Instance.RenderDocCapture = true;
+
 
 			using (VkChess app = new VkChess ())
 				app.Run ();
@@ -38,7 +45,7 @@ namespace vkChess
 			enabled_features.samplerAnisotropy = available_features.samplerAnisotropy;
 			enabled_features.sampleRateShading = available_features.sampleRateShading;
 			enabled_features.geometryShader = available_features.geometryShader;
-			enabled_features.tessellationShader = available_features.tessellationShader;
+			//enabled_features.tessellationShader = available_features.tessellationShader;
 
 			enabled_features.textureCompressionBC = available_features.textureCompressionBC;
 		}
@@ -89,7 +96,7 @@ namespace vkChess
 			camera.SetRotation (0.6f, 0, 0);
 			camera.SetPosition (0, 0f, 12.0f);
 
-			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [2], camera.NearPlane, camera.FarPlane);
+			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [0], camera.NearPlane, camera.FarPlane);
 			dev.WaitIdle ();
 			renderer.LoadModel (transferQ, modelPathes [0]);
 			camera.Model = Matrix4x4.CreateScale (0.5f);// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
@@ -98,7 +105,7 @@ namespace vkChess
 
 			curRenderer = renderer;
 
-			crow.Load ("ui/chess.crow").DataSource = this;
+			//crow.Load ("ui/chess.crow").DataSource = this;
 
 			initBoard ();
 			initStockfish ();
@@ -128,6 +135,8 @@ namespace vkChess
 			}
 			if (Animation.HasAnimations)
 				renderer.shadowMapRenderer.updateShadowMap = true;
+
+			animationSteps = (int)fps / 2;
 
 			Animation.ProcessAnimations ();
 			Piece.FlushHostBuffer ();
@@ -725,7 +734,7 @@ namespace vkChess
 		#endregion
 
 		#region game logic
-		public const int animationSteps = 50;
+		public static int animationSteps = 50;
 		static Vector4 bestMovePosColor = new Vector4 (0, 10, 10, 0);
 		static Vector4 selectionPosColor = new Vector4 (0, 0, 5, 0);
 		static Vector4 validPosColor = new Vector4 (0, 5, 0, 0);

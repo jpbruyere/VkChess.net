@@ -22,7 +22,7 @@ using System;
 using MiscUtil;
 using System.Reflection;
 
-namespace CVKL
+namespace vke
 {
 	public class Animation<T> : Animation
 	{

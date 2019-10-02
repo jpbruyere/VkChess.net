@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using VK;
+using Vulkan;
 
-namespace CVKL {
+namespace vke {
 	public class EnvironmentCube : GraphicPipeline {
 
 		GPUBuffer vboSkybox;
@@ -23,7 +23,7 @@ namespace CVKL {
 
 				cubemap = KTX.KTX.Load (staggingQ, cmdPool, cubemapPath,
 					VkImageUsageFlags.Sampled, VkMemoryPropertyFlags.DeviceLocal, true);
-				cubemap.CreateView (VkImageViewType.Cube, VkImageAspectFlags.Color, 6, 0, cubemap.CreateInfo.mipLevels);
+				cubemap.CreateView (VkImageViewType.Cube, VkImageAspectFlags.Color, 6);
 				cubemap.CreateSampler (VkSamplerAddressMode.ClampToEdge);
 				cubemap.SetName ("skybox Texture");
 				cubemap.Descriptor.imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
@@ -123,7 +123,7 @@ namespace CVKL {
 			cfg.AddShader (VkShaderStageFlags.Fragment, "shaders/genbrdflut.frag.spv");
 
 			using (GraphicPipeline pl = new GraphicPipeline (cfg)) {
-				using (Framebuffer fb = new Framebuffer (cfg.RenderPass, dim, dim, lutBrdf)) {
+				using (FrameBuffer fb = new FrameBuffer (cfg.RenderPass, dim, dim, lutBrdf)) {
 					CommandBuffer cmd = cmdPool.AllocateCommandBuffer ();
 					cmd.Start (VkCommandBufferUsageFlags.OneTimeSubmit);
 					pl.RenderPass.Begin (cmd, fb);
@@ -171,7 +171,7 @@ namespace CVKL {
 				cmap.SetName ("prefilterenvmap");
 			else
 				cmap.SetName ("irradianceCube");
-			cmap.CreateView (VkImageViewType.Cube, VkImageAspectFlags.Color, 6, 0, numMips);
+			cmap.CreateView (VkImageViewType.Cube, VkImageAspectFlags.Color, 6);
 			cmap.CreateSampler (VkSamplerAddressMode.ClampToEdge);
 
 			DescriptorPool dsPool = new DescriptorPool (Dev, 2, new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler));
@@ -223,7 +223,7 @@ namespace CVKL {
 				dsUpdate.Write (Dev, dset, cubemap.Descriptor);
 				Dev.WaitIdle ();
 
-				using (Framebuffer fb = new Framebuffer (pl.RenderPass, dim, dim, imgFbOffscreen)) {
+				using (FrameBuffer fb = new FrameBuffer (pl.RenderPass, dim, dim, imgFbOffscreen)) {
 					CommandBuffer cmd = cmdPool.AllocateCommandBuffer ();
 					cmd.Start (VkCommandBufferUsageFlags.OneTimeSubmit);
 

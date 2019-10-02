@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Diagnostics;
 
-namespace CVKL
+namespace vke
 {
 	public delegate void AnimationEventHandler(Animation a);
 
@@ -77,10 +77,7 @@ namespace CVKL
 				if (Animation.GetAnimation (a.AnimatedInstance, a.propertyName, ref aa)) {
 					aa.CancelAnimation ();
 				}
-//			if (a.AnimatedInstance is CardInstance) {
-//				if ((a.AnimatedInstance as CardInstance).Model.Name.StartsWith ("Spider"))
-// 					Debugger.Break ();
-//			}
+
 				//a.AnimationFinished += onAnimationFinished;
 
 				a.AnimationFinished += OnEnd;

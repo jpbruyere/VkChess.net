@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using CVKL;
-using VK;
+using vke;
+using vke.glTF;
+using Vulkan;
 
 namespace vkChess {
     public class DeferredPbrRenderer : IDisposable {
@@ -31,7 +32,7 @@ namespace vkChess {
             shadowMap
         }
 
-        public static bool TEXTURE_ARRAY = false;
+        public static bool TEXTURE_ARRAY;
 
         public DebugView currentDebugView = DebugView.none;
         public int lightNumDebug = 0;
@@ -82,7 +83,7 @@ namespace vkChess {
 
 		const float lightMoveSpeed = 0.1f;
 
-        Framebuffer[] frameBuffers;
+        FrameBuffer[] frameBuffers;
         Image gbColorRough, gbEmitMetal, gbN_AO, gbPos, hdrImg;
 
         DescriptorPool descriptorPool;
@@ -255,7 +256,7 @@ namespace vkChess {
             cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
             //cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
 
-            cfg.AddVertexBinding<PbrModel.Vertex> (0);
+            cfg.AddVertexBinding<PbrModelTexArray.Vertex> (0);
             cfg.AddVertexAttributes (0, VkFormat.R32g32b32Sfloat, VkFormat.R32g32b32Sfloat, VkFormat.R32g32Sfloat, VkFormat.R32g32Sfloat);
 
             if (DRAW_INSTACED) {
@@ -349,8 +350,8 @@ namespace vkChess {
             modelAABB = model.DefaultScene.AABB;
         }
 
-        public void recordDraw (CommandBuffer cmd, int imageIndex, CVKL.Buffer instanceBuf = null, params Model.InstancedCmd[] instances) {
-            Framebuffer fb = frameBuffers[imageIndex];
+        public void recordDraw (CommandBuffer cmd, int imageIndex, vke.Buffer instanceBuf = null, params Model.InstancedCmd[] instances) {
+            FrameBuffer fb = frameBuffers[imageIndex];
             renderPass.Begin(cmd, fb);
 
             cmd.SetViewport(fb.Width, fb.Height);
@@ -470,10 +471,10 @@ namespace vkChess {
 
             createGBuff ();
 
-            frameBuffers = new Framebuffer[swapChain.ImageCount];
+            frameBuffers = new FrameBuffer[swapChain.ImageCount];
 
             for (int i = 0; i < swapChain.ImageCount; ++i) {
-                frameBuffers[i] = new Framebuffer (renderPass, swapChain.Width, swapChain.Height, new Image[] {
+                frameBuffers[i] = new FrameBuffer (renderPass, swapChain.Width, swapChain.Height, new Image[] {
                     swapChain.images[i], null, gbColorRough, gbEmitMetal, gbN_AO, gbPos, hdrImg});
             }
         }

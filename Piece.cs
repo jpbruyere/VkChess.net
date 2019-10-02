@@ -28,7 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
-using CVKL;
+using vke;
 
 namespace vkChess {
     public class ChessMoves : List<String> {

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0"?>
-<Window Caption="Lighting" Icon="#deferred.crow.svg" Left="10" Top="1" Width="70%" Height="30%" CornerRadius="0">
+<Window Caption="Options" Icon="#deferred.crow.svg" Left="10" Top="1" Width="70%" Height="50%" CornerRadius="5">
     <VerticalStack Spacing="1" Margin="10" >
     	<HorizontalStack Height="Fit">
     		<VerticalStack Spacing="3" Width="50%" >
@@ -18,45 +18,45 @@
 		    	<CheckBox Caption="Whites are AI" IsChecked="{²WhitesAreAI}" Width="Stretched"/>
 		    	<CheckBox Caption="Blacks are AI" IsChecked="{²BlacksAreAI}" Width="Stretched"/>
 		    	<CheckBox Caption="Enable Hint" IsChecked="{²EnableHint}" Width="Stretched"/>    
-	    	</VerticalStack> 
-	    	<VerticalStack Spacing="1">
-		    	<HorizontalStack Height="Fit">
-		    		<Label Width="50%" Text="Pce Color"/>
-		    		<Label Width="Stretched" Text="{DebugCurColor}"/>
-		    	</HorizontalStack>	    		
-		    	<HorizontalStack Height="Fit">
-		    		<Label Width="50%" Text="Pce Type"/>
-		    		<Label Width="Stretched" Text="{DebugCurType}"/>
-		    	</HorizontalStack>	    		
-		    	<HorizontalStack Height="Fit">
-		    		<Label Width="50%" Text="Pce Cell"/>
-		    		<Label Width="Stretched" Text="{DebugCurCell}"/>
-		    	</HorizontalStack>	    		
-		    	<HorizontalStack Height="Fit">
-		    		<Label Width="50%" Text="Pce Cell pos"/>
-		    		<Label Width="Stretched" Text="{DebugCurCellPos}"/>
-		    	</HorizontalStack>	 
-	    	</VerticalStack> 
+	    	</VerticalStack>	    	
+		    	<VerticalStack Margin="20" Spacing="1">
+			    	<HorizontalStack Height="Fit">
+			    		<Label Text="Pce Color" Style="GridLabel"/>
+			    		<Label Text="{DebugCurColor}" Style="GridValue"/>
+			    	</HorizontalStack>	    		
+			    	<HorizontalStack Height="Fit">
+			    		<Label Text="Pce Type" Style="GridLabel"/>
+			    		<Label Text="{DebugCurType}" Style="GridValue" />
+			    	</HorizontalStack>	    		
+			    	<HorizontalStack Height="Fit">
+			    		<Label Text="Pce Cell" Style="GridLabel"/>
+			    		<Label Text="{DebugCurCell}" Style="GridValue"/>
+			    	</HorizontalStack>	    		
+			    	<HorizontalStack Height="Fit">
+			    		<Label Text="Pce Cell pos" Style="GridLabel"/>
+			    		<Label Text="{DebugCurCellPos}" Style="GridValue"/>
+			    	</HorizontalStack>	 
+		    	</VerticalStack>	    	
     	</HorizontalStack>
-        <HorizontalStack Height="Fit" >
-            <Label Text="Exposure:" Width="80"/>
-            <Slider Height="10" Value="{²Exposure}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
-            <Label Text="{Exposure}" Width="40" TextAlignment="Right" />
-        </HorizontalStack>        
-        <HorizontalStack Height="Fit">
-            <Label Text="Gamma:" Width="80" />
-            <Slider Height="10" Value="{²Gamma}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
-            <Label Text="{Gamma}" Width="40" TextAlignment="Right" />
-        </HorizontalStack>
-        <HorizontalStack Height="Fit">
-            <Label Text="IBL Ambient:" Width="100" />
-            <Slider Height="10" Value="{²IBLAmbient}" Maximum="50.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
-            <Label Text="{IBLAmbient}" Width="40" TextAlignment="Right" />
-        </HorizontalStack>            
-        <HorizontalStack Height="Fit">
-            <Label Text="Selected Cell:" Width="200" />            
-            <Label Text="{SelCell}" />
-        </HorizontalStack>                   
+    	<Border Margin="10">
+    		<VerticalStack>
+		        <HorizontalStack Style="Slid" >
+		            <Label Text="Exposure:" Width="80"/>
+		            <Slider Height="10" Value="{²Exposure}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
+		            <Label Text="{Exposure}" Width="40" TextAlignment="Right" />
+		        </HorizontalStack>        
+		        <HorizontalStack Style="Slid" >
+		            <Label Text="Gamma:" Width="80" />
+		            <Slider Height="10" Value="{²Gamma}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
+		            <Label Text="{Gamma}" Width="40" TextAlignment="Right" />
+		        </HorizontalStack>
+		        <HorizontalStack Style="Slid" >
+		            <Label Text="IBL Ambient:" Width="100" />
+		            <Slider Height="10" Value="{²IBLAmbient}" Maximum="50.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
+		            <Label Text="{IBLAmbient}" Width="40" TextAlignment="Right" />
+		        </HorizontalStack>            
+			</VerticalStack>
+        </Border>
     </VerticalStack>
 </Window>
 
