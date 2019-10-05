@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0"?>
-<Window Caption="Options" Icon="#deferred.crow.svg" Left="10" Top="1" Width="70%" Height="50%" CornerRadius="5">
+<Window Caption="Options" Icon="#deferred.crow.svg" Left="10" Top="1" Width="70%" Height="50%" CornerRadius="5" >
     <VerticalStack Spacing="1" Margin="10" >
     	<HorizontalStack Height="Fit">
     		<VerticalStack Spacing="3" Width="50%" >

@@ -1,4 +1,7 @@
-﻿icon {
+﻿Window {
+	Background="0.01,0.01,0.01,0.8";	
+}
+icon {
 	Width="14";
 	Height="14";
 }

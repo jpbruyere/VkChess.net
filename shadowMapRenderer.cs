@@ -89,8 +89,8 @@ namespace vkChess {
 				cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 4, VkFormat.R32g32b32a32Sfloat, 64));
 			}
 
-			cfg.AddShader (VkShaderStageFlags.Vertex, "shaders/shadow.vert.spv");
-			cfg.AddShader (VkShaderStageFlags.Geometry, "shaders/shadow.geom.spv");
+			cfg.AddShader (VkShaderStageFlags.Vertex, "#vkChess.net.shadow.vert.spv");
+			cfg.AddShader (VkShaderStageFlags.Geometry, "#vkChess.net.shadow.geom.spv");
 
 			shadowPipeline = new GraphicPipeline (cfg);
 

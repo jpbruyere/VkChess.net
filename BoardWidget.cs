@@ -21,7 +21,8 @@
 using System;
 using System.ComponentModel;
 using Crow;
-using vkvg;
+using Crow.Cairo;
+//using vkvg;
 
 namespace vkChess
 {
@@ -52,8 +53,8 @@ namespace vkChess
 		{
 			base.onDraw (gr);
 
-			gr.FontFace = Font.Name;
-			gr.FontSize = (uint)Font.Size;
+			/*gr.FontFace = Font.Name;
+			gr.FontSize = (uint)Font.Size;*/
 
 			FontExtents fe = gr.FontExtents;
 

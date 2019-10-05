@@ -14,6 +14,7 @@ layout (set = 0, binding = 0) uniform UBO {
 } ubo;
 
 layout (constant_id = 0) const uint NUM_LIGHTS = 1;
+layout (constant_id = 1) const float SHADOW_FACTOR = 0.25f;
 
 struct Light {
     vec4 position;
@@ -27,7 +28,6 @@ layout (set = 0, binding = 4) uniform UBOLights {
 
 const float M_PI = 3.141592653589793;
 const float c_MinRoughness = 0.04;
-#define SHADOW_FACTOR 0.25
 
 layout (input_attachment_index = 0, set = 1, binding = 0) uniform subpassInputMS samplerColorRough;
 layout (input_attachment_index = 1, set = 1, binding = 1) uniform subpassInputMS samplerEmitMetal;

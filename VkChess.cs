@@ -17,12 +17,11 @@ namespace vkChess
 	public enum ChessColor { White, Black };
 	public enum PieceType { Pawn, Rook, Knight, Bishop, King, Queen };
 
-	public class VkChess : CrowWin
-	{
+	public class VkChess : VkCrowWindow {
 		static void Main (string [] args) {
 			//Instance.DEBUG_UTILS = true;
-			//Instance.VALIDATION = true;
-			//Instance.RENDER_DOC_CAPTURE = true;
+			Instance.VALIDATION = true;
+			Instance.RENDER_DOC_CAPTURE = true;
 
 			DeferredPbrRenderer.NUM_SAMPLES = VkSampleCountFlags.SampleCount4;
 			DeferredPbrRenderer.DRAW_INSTACED = true;
@@ -37,6 +36,35 @@ namespace vkChess
 
 			using (VkChess app = new VkChess ())
 				app.Run ();
+		}
+
+		public VkChess (): base() {
+			Configuration.Global.Set ("StockfishPath", "/usr/games/stockfish");
+
+			cmds = cmdPool.AllocateCommandBuffer (swapChain.ImageCount);
+
+			camera = new Camera (Utils.DegreesToRadians (45f), 1f, 0.1f, 32f);
+			camera.SetRotation (0.6f, 0, 0);
+			camera.SetPosition (0, 0f, 12.0f);
+			camera.AspectRatio = Width / Height;
+
+			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [0], camera.NearPlane, camera.FarPlane);
+			dev.WaitIdle ();
+			renderer.LoadModel (transferQ, modelPathes [0]);
+			camera.Model = Matrix4x4.CreateScale (0.5f);// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
+
+			UpdateFrequency = 8;
+
+			curRenderer = renderer;
+
+			initBoard ();
+			initStockfish ();
+
+			CurrentState = GameState.Play;
+
+			uiImageUpdate = renderer.UiImageUpdate;
+			CreateInterface ();
+			iFace.Load ("ui/chess.crow").DataSource = this;
 		}
 
 		protected override void configureEnabledFeatures (VkPhysicalDeviceFeatures available_features, ref VkPhysicalDeviceFeatures enabled_features) {
@@ -88,33 +116,16 @@ namespace vkChess
 		Model.InstancedCmd [] instancedCmds;
 
 		public static DeferredPbrRenderer curRenderer;
+		bool rebuildBuffers = false;
 
-		protected override void onLoad () {
-			Configuration.Global.Set ("StockfishPath", "/usr/games/stockfish");
+		void buildCommandBuffers () {
+			cmdPool.Reset (); //VkCommandPoolResetFlags.ReleaseResources);
 
-			camera = new Camera (Utils.DegreesToRadians (45f), 1f, 0.1f, 32f);
-			camera.SetRotation (0.6f, 0, 0);
-			camera.SetPosition (0, 0f, 12.0f);
-
-			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [0], camera.NearPlane, camera.FarPlane);
-			dev.WaitIdle ();
-			renderer.LoadModel (transferQ, modelPathes [0]);
-			camera.Model = Matrix4x4.CreateScale (0.5f);// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
-
-			UpdateFrequency = 8;
-
-			curRenderer = renderer;
-
-			//crow.Load ("ui/chess.crow").DataSource = this;
-
-			initBoard ();
-			initStockfish ();
-
-			CurrentState = GameState.Play;
-		}
-
-		protected override void recordDraw (CommandBuffer cmd, int imageIndex) {
-			renderer.recordDraw (cmd, imageIndex, instanceBuff, instancedCmds?.ToArray ());
+			for (int i = 0; i < swapChain.ImageCount; ++i) {
+				cmds [i].Start ();
+				renderer.recordDraw (cmds[i], i, instanceBuff, instancedCmds?.ToArray ());
+				cmds [i].End ();
+			}
 		}
 
 		public override void UpdateView () {
@@ -129,6 +140,8 @@ namespace vkChess
 		public static bool updateInstanceCmds = true;
 
 		public override void Update () {
+			base.Update ();
+
 			if (updateInstanceCmds) {
 				updateDrawCmdList ();
 				rebuildBuffers = true;
@@ -136,7 +149,7 @@ namespace vkChess
 			if (Animation.HasAnimations)
 				renderer.shadowMapRenderer.updateShadowMap = true;
 
-			animationSteps = (int)fps / 2;
+			animationSteps = (int)fps / 5;
 
 			Animation.ProcessAnimations ();
 			Piece.FlushHostBuffer ();
@@ -144,12 +157,17 @@ namespace vkChess
 			if (instanceBuff != null && renderer.shadowMapRenderer.updateShadowMap)
 				renderer.shadowMapRenderer.update_shadow_map (cmdPool, instanceBuff, instancedCmds.ToArray ());
 
-			base.Update ();
+			if (rebuildBuffers) {
+				buildCommandBuffers ();
+				rebuildBuffers = false;
+			}
 		}
 
 		protected override void OnResize () {
-			renderer.Resize ();
 			base.OnResize ();
+			renderer.Resize ();
+			buildCommandBuffers ();
+			updateViewRequested = true;
 		}
 
 
@@ -185,16 +203,17 @@ namespace vkChess
 			return vec;
 		}
 		protected override void onScroll (double xOffset, double yOffset) {
-			if (KeyModifiers.HasFlag (Modifier.Shift)) {
+			/*if (KeyModifiers.HasFlag (Modifier.Shift)) {
 				if (crow.ProcessMouseWheelChanged ((float)xOffset))
 					return;
 			} else if (crow.ProcessMouseWheelChanged ((float)yOffset))
-				return;
+				return;*/
 			camera.Move (0, 0, (float)yOffset * -4f);
 			updateViewRequested = true;
 		}
 		protected override void onMouseMove (double xPos, double yPos) {
-			if (crow.ProcessMouseMove ((int)xPos, (int)yPos))
+			base.onMouseMove (xPos, yPos);
+			if (MouseIsInInterface)
 				return;
 
 			double diffX = lastMouseX - xPos;
@@ -237,7 +256,8 @@ namespace vkChess
 				NotifyValueChanged ("DebugCurCell", "");
 		}
 		protected override void onMouseButtonDown (Glfw.MouseButton button) {
-			if (crow.ProcessMouseButtonDown ((Crow.MouseButton)button))
+			base.onMouseButtonDown (button);
+			if (MouseIsInInterface)
 				return;
 
 			//if (waitAnimationFinished) {
@@ -302,9 +322,9 @@ namespace vkChess
 				loadWindow (@"ui/main.crow", this);
 				break;
 			case Glfw.Key.F2:
-				loadWindow (@"ui/board.crow", this);
-				NotifyValueChanged ("board", board);
-				//crow.Load (@"ui/scene.crow").DataSource = this;
+				/*loadWindow (@"ui/board.crow", this);
+				NotifyValueChanged ("board", board);*/
+				loadWindow (@"ui/scene.crow", this.renderer.model);
 				break;
 			case Glfw.Key.F3:
 				checkBoardIntegrity ();

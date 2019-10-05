@@ -12,6 +12,7 @@ layout (set = 0, binding = 0) uniform UBO {
 } ubo;
 
 layout (input_attachment_index = 0, set = 1, binding = 4) uniform subpassInputMS samplerHDR;
+layout (set = 0, binding = 8) uniform sampler2D samplerUI;
 
 layout (location = 0) in vec2 inUV;
 layout (location = 0) out vec4 outColor;
@@ -51,8 +52,9 @@ vec3 SRGBtoLINEAR(vec3 srgbIn)
 
 void main() 
 {    
-    vec4 hdrColor = subpassLoad(samplerHDR, gl_SampleID);        
-    outColor = vec4(SRGBtoLINEAR(tonemap(hdrColor.rgb)), hdrColor.a);
+    vec4 hdrColor = subpassLoad(samplerHDR, gl_SampleID);
+    vec4 ui = texture(samplerUI, inUV);
+    outColor = (hdrColor.a - ui.a) * vec4(SRGBtoLINEAR(tonemap(hdrColor.rgb)), 1.0) + ui;    
     /*
     vec3 mapped = vec3(1.0) - exp(-hdrColor.rgb * ubo.exposure);        
     mapped = pow(mapped, vec3(1.0 / ubo.gamma));

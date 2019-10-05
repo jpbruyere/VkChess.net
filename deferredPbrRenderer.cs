@@ -81,9 +81,11 @@ namespace vkChess {
 			}
 		};
 
+		public DescriptorSetWrites UiImageUpdate => new DescriptorSetWrites (dsMain, descLayoutMain.Bindings [8]);
+
 		const float lightMoveSpeed = 0.1f;
 
-        FrameBuffer[] frameBuffers;
+        FrameBuffers frameBuffers;
         Image gbColorRough, gbEmitMetal, gbN_AO, gbPos, hdrImg;
 
         DescriptorPool descriptorPool;
@@ -122,7 +124,7 @@ namespace vkChess {
 
             descriptorPool = new DescriptorPool (dev, 3,
                 new VkDescriptorPoolSize (VkDescriptorType.UniformBuffer, 3),
-                new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 5),
+                new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 6),
                 new VkDescriptorPoolSize (VkDescriptorType.InputAttachment, 5)
             );                
 
@@ -152,30 +154,30 @@ namespace vkChess {
             renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
             renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
 
-            SubPass[] subpass = { new SubPass (), new SubPass (), new SubPass (), new SubPass () };
+            SubPass[] subpasses = { new SubPass (), new SubPass (), new SubPass (), new SubPass () };
             //skybox
-            subpass[SP_SKYBOX].AddColorReference (6, VkImageLayout.ColorAttachmentOptimal);
+            subpasses[SP_SKYBOX].AddColorReference (6, VkImageLayout.ColorAttachmentOptimal);
             //models
-            subpass[SP_MODELS].AddColorReference (new VkAttachmentReference (2, VkImageLayout.ColorAttachmentOptimal),
+            subpasses[SP_MODELS].AddColorReference (new VkAttachmentReference (2, VkImageLayout.ColorAttachmentOptimal),
                                     new VkAttachmentReference (3, VkImageLayout.ColorAttachmentOptimal),
                                     new VkAttachmentReference (4, VkImageLayout.ColorAttachmentOptimal),
                                     new VkAttachmentReference (5, VkImageLayout.ColorAttachmentOptimal));
-            subpass[SP_MODELS].SetDepthReference (1, VkImageLayout.DepthStencilAttachmentOptimal);
-            subpass[SP_MODELS].AddPreservedReference (0);
+            subpasses[SP_MODELS].SetDepthReference (1, VkImageLayout.DepthStencilAttachmentOptimal);
+            subpasses[SP_MODELS].AddPreservedReference (0);
 
             //compose
-            subpass[SP_COMPOSE].AddColorReference (6, VkImageLayout.ColorAttachmentOptimal);
-            subpass[SP_COMPOSE].AddInputReference (new VkAttachmentReference (2, VkImageLayout.ShaderReadOnlyOptimal),
+            subpasses[SP_COMPOSE].AddColorReference (6, VkImageLayout.ColorAttachmentOptimal);
+            subpasses[SP_COMPOSE].AddInputReference (new VkAttachmentReference (2, VkImageLayout.ShaderReadOnlyOptimal),
                                     new VkAttachmentReference (3, VkImageLayout.ShaderReadOnlyOptimal),
                                     new VkAttachmentReference (4, VkImageLayout.ShaderReadOnlyOptimal),
                                     new VkAttachmentReference (5, VkImageLayout.ShaderReadOnlyOptimal));
             //tone mapping
-            subpass[SP_TONE_MAPPING].AddColorReference ((NUM_SAMPLES == VkSampleCountFlags.SampleCount1) ? 0u : 2u, VkImageLayout.ColorAttachmentOptimal);
-            subpass[SP_TONE_MAPPING].AddInputReference (new VkAttachmentReference (6, VkImageLayout.ShaderReadOnlyOptimal));
+            subpasses[SP_TONE_MAPPING].AddColorReference ((NUM_SAMPLES == VkSampleCountFlags.SampleCount1) ? 0u : 2u, VkImageLayout.ColorAttachmentOptimal);
+            subpasses[SP_TONE_MAPPING].AddInputReference (new VkAttachmentReference (6, VkImageLayout.ShaderReadOnlyOptimal));
             if (NUM_SAMPLES != VkSampleCountFlags.SampleCount1)
-                subpass[SP_TONE_MAPPING].AddResolveReference (0, VkImageLayout.ColorAttachmentOptimal);
+                subpasses[SP_TONE_MAPPING].AddResolveReference (0, VkImageLayout.ColorAttachmentOptimal);
 
-            renderPass.AddSubpass (subpass);
+            renderPass.AddSubpass (subpasses);
 
             renderPass.AddDependency (Vk.SubpassExternal, SP_SKYBOX,
                 VkPipelineStageFlags.BottomOfPipe, VkPipelineStageFlags.ColorAttachmentOutput,
@@ -199,12 +201,12 @@ namespace vkChess {
 
             descLayoutMain = new DescriptorSetLayout (dev,
                 new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Vertex | VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer),//matrices and params
-                new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-                new VkDescriptorSetLayoutBinding (2, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-                new VkDescriptorSetLayoutBinding (3, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
+                new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//irradiance
+                new VkDescriptorSetLayoutBinding (2, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//prefil
+                new VkDescriptorSetLayoutBinding (3, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//lut brdf
                 new VkDescriptorSetLayoutBinding (4, VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer),//lights
                 new VkDescriptorSetLayoutBinding (5, VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer));//materials
-            descLayoutMain.Bindings.Add (new VkDescriptorSetLayoutBinding (6, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler));
+            descLayoutMain.Bindings.Add (new VkDescriptorSetLayoutBinding (6, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler));//shadow map
 
 
             if (TEXTURE_ARRAY) {
@@ -219,7 +221,9 @@ namespace vkChess {
                 ); 
             }
 
-            descLayoutGBuff = new DescriptorSetLayout (dev,
+			descLayoutMain.Bindings.Add (new VkDescriptorSetLayoutBinding (8, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler));//uiImage
+
+			descLayoutGBuff = new DescriptorSetLayout (dev,
                 new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Fragment, VkDescriptorType.InputAttachment),//color + roughness
                 new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.InputAttachment),//emit + metal
                 new VkDescriptorSetLayoutBinding (2, VkShaderStageFlags.Fragment, VkDescriptorType.InputAttachment),//normals + AO
@@ -269,14 +273,14 @@ namespace vkChess {
                         new SpecializationConstant<float> (1, farPlane),
                         new SpecializationConstant<float> (2, MAX_MATERIAL_COUNT))) {
                 if (DRAW_INSTACED)
-                    cfg.AddShader(VkShaderStageFlags.Vertex, "shaders/GBuffPbrInstanced.vert.spv");
+                    cfg.AddShader(VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbrInstanced.vert.spv");
                 else
-                    cfg.AddShader(VkShaderStageFlags.Vertex, "shaders/GBuffPbr.vert.spv");
+                    cfg.AddShader(VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbr.vert.spv");
 
                 if (TEXTURE_ARRAY) 
-                    cfg.AddShader (VkShaderStageFlags.Fragment, "shaders/GBuffPbrTexArray.frag.spv", constants);
+                    cfg.AddShader (VkShaderStageFlags.Fragment, "#vkChess.net.GBuffPbrTexArray.frag.spv", constants);
                 else
-                    cfg.AddShader (VkShaderStageFlags.Fragment, "shaders/GBuffPbr.frag.spv", constants);
+                    cfg.AddShader (VkShaderStageFlags.Fragment, "#vkChess.net.GBuffPbr.frag.spv", constants);
 
                 gBuffPipeline = new GraphicPipeline (cfg);
             }
@@ -290,17 +294,18 @@ namespace vkChess {
             cfg.depthStencilState.depthTestEnable = false;
             cfg.depthStencilState.depthWriteEnable = false;
             using (SpecializationInfo constants = new SpecializationInfo (
-                new SpecializationConstant<uint> (0, (uint)lights.Length))) {
-                cfg.AddShader (VkShaderStageFlags.Vertex, "shaders/FullScreenQuad.vert.spv");
-                cfg.AddShader (VkShaderStageFlags.Fragment, "shaders/compose_with_shadows.frag.spv", constants);
+                new SpecializationConstant<uint> (0, (uint)lights.Length),
+				new SpecializationConstant<float> (1, 0.25f))) {
+                cfg.AddShader (VkShaderStageFlags.Vertex, "#vkChess.net.FullScreenQuad.vert.spv");
+                cfg.AddShader (VkShaderStageFlags.Fragment, "#vkChess.net.compose_with_shadows.frag.spv", constants);
                 composePipeline = new GraphicPipeline (cfg);
             }
             //DEBUG DRAW use subpass of compose
-            cfg.shaders[1] = new ShaderInfo (VkShaderStageFlags.Fragment, "shaders/show_gbuff.frag.spv");
+            cfg.shaders[1] = new ShaderInfo (VkShaderStageFlags.Fragment, "#vkChess.net.show_gbuff.frag.spv");
             cfg.SubpassIndex = SP_COMPOSE;
             debugPipeline = new GraphicPipeline (cfg);
             //TONE MAPPING
-            cfg.shaders[1] = new ShaderInfo (VkShaderStageFlags.Fragment, "shaders/tone_mapping.frag.spv");
+            cfg.shaders[1] = new ShaderInfo (VkShaderStageFlags.Fragment, "#vkChess.net.tone_mapping.frag.spv");
             cfg.SubpassIndex = SP_TONE_MAPPING;
             toneMappingPipeline = new GraphicPipeline (cfg);
 
@@ -367,7 +372,7 @@ namespace vkChess {
                 model.Bind(cmd);
                 if (DRAW_INSTACED) {
                     if (instanceBuf != null)
-                    model.Draw(cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
+                    	model.Draw(cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
                 } else if (mainScene != null)
                     model.Draw(cmd, gBuffPipeline.Layout, mainScene);
             }
@@ -465,24 +470,22 @@ namespace vkChess {
         }
 
         public void Resize () {
-            if (frameBuffers != null)
-                for (int i = 0; i < swapChain.ImageCount; ++i)
-                    frameBuffers[i]?.Dispose ();
+			frameBuffers?.Dispose ();
+			frameBuffers = new FrameBuffers ();
 
             createGBuff ();
 
-            frameBuffers = new FrameBuffer[swapChain.ImageCount];
-
-            for (int i = 0; i < swapChain.ImageCount; ++i) {
-                frameBuffers[i] = new FrameBuffer (renderPass, swapChain.Width, swapChain.Height, new Image[] {
-                    swapChain.images[i], null, gbColorRough, gbEmitMetal, gbN_AO, gbPos, hdrImg});
-            }
+			for (int i = 0; i < swapChain.ImageCount; ++i) {
+				frameBuffers.Add (new FrameBuffer (renderPass, swapChain.Width, swapChain.Height, new Image [] {
+					swapChain.images[i], null, gbColorRough, gbEmitMetal, gbN_AO, gbPos, hdrImg}));
+			}
+			//frameBuffers = renderPass.CreateFrameBuffers (swapChain);
         }
 
         public void Dispose () {
             dev.WaitIdle ();
-            for (int i = 0; i < swapChain.ImageCount; ++i)
-                frameBuffers[i]?.Dispose ();
+            
+            frameBuffers?.Dispose ();
 
             gbColorRough.Dispose ();
             gbEmitMetal.Dispose ();
