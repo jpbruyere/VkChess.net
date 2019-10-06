@@ -5,8 +5,9 @@ using vke;
 using vke.glTF;
 using Vulkan;
 
-namespace vkChess {
-    public class DeferredPbrRenderer : IDisposable {
+namespace vkChess
+{
+	public class DeferredPbrRenderer : IDisposable {
         Device dev;
         SwapChain swapChain;
         public PresentQueue presentQueue;
@@ -93,7 +94,7 @@ namespace vkChess {
         DescriptorSet dsMain, dsGBuff;
 
         public PipelineCache pipelineCache;
-        Pipeline gBuffPipeline, composePipeline, toneMappingPipeline, debugPipeline;
+        Pipeline depthPrepassPipeline, gBuffPipeline, composePipeline, toneMappingPipeline, debugPipeline;
 
         public HostBuffer uboMatrices { get; private set; }
         public HostBuffer<Light> uboLights { get; private set; }
@@ -107,9 +108,10 @@ namespace vkChess {
         public BoundingBox modelAABB;
 
         const int SP_SKYBOX         = 0;
-        const int SP_MODELS         = 1;
-        const int SP_COMPOSE         = 2;
-        const int SP_TONE_MAPPING     = 3;
+		const int SP_DEPTH_PREPASS	= 1;
+		const int SP_MODELS         = 2;
+        const int SP_COMPOSE        = 3;
+        const int SP_TONE_MAPPING   = 4;
 
         string cubemapPath;
 
@@ -154,11 +156,15 @@ namespace vkChess {
             renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
             renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
 
-            SubPass[] subpasses = { new SubPass (), new SubPass (), new SubPass (), new SubPass () };
+            SubPass[] subpasses = { new SubPass (), new SubPass (), new SubPass (), new SubPass (), new SubPass () };
             //skybox
             subpasses[SP_SKYBOX].AddColorReference (6, VkImageLayout.ColorAttachmentOptimal);
-            //models
-            subpasses[SP_MODELS].AddColorReference (new VkAttachmentReference (2, VkImageLayout.ColorAttachmentOptimal),
+
+			//depth pre pass
+			subpasses [SP_DEPTH_PREPASS].SetDepthReference (1, VkImageLayout.DepthStencilAttachmentOptimal);
+			subpasses [SP_DEPTH_PREPASS].AddPreservedReference (6);
+			//models
+			subpasses [SP_MODELS].AddColorReference (new VkAttachmentReference (2, VkImageLayout.ColorAttachmentOptimal),
                                     new VkAttachmentReference (3, VkImageLayout.ColorAttachmentOptimal),
                                     new VkAttachmentReference (4, VkImageLayout.ColorAttachmentOptimal),
                                     new VkAttachmentReference (5, VkImageLayout.ColorAttachmentOptimal));
@@ -182,10 +188,13 @@ namespace vkChess {
             renderPass.AddDependency (Vk.SubpassExternal, SP_SKYBOX,
                 VkPipelineStageFlags.BottomOfPipe, VkPipelineStageFlags.ColorAttachmentOutput,
                 VkAccessFlags.MemoryRead, VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite);
-            renderPass.AddDependency (SP_SKYBOX, SP_MODELS,
-                VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.FragmentShader,
-                VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.ShaderRead);
-            renderPass.AddDependency (SP_MODELS, SP_COMPOSE,
+			renderPass.AddDependency (SP_SKYBOX, SP_DEPTH_PREPASS,
+				VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.EarlyFragmentTests,
+				VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.ShaderRead);
+			renderPass.AddDependency (SP_DEPTH_PREPASS, SP_MODELS,
+				VkPipelineStageFlags.EarlyFragmentTests, VkPipelineStageFlags.FragmentShader,
+				VkAccessFlags.DepthStencilAttachmentWrite, VkAccessFlags.ShaderRead);
+			renderPass.AddDependency (SP_MODELS, SP_COMPOSE,
                 VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.FragmentShader,
                 VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.ShaderRead);
             renderPass.AddDependency (SP_COMPOSE, SP_TONE_MAPPING,
@@ -255,9 +264,6 @@ namespace vkChess {
   
             cfg.RenderPass = renderPass;
             cfg.SubpassIndex = SP_MODELS;
-            cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
-            cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
-            cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
             //cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
 
             cfg.AddVertexBinding<PbrModelTexArray.Vertex> (0);
@@ -277,7 +283,17 @@ namespace vkChess {
                 else
                     cfg.AddShader(VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbr.vert.spv");
 
-                if (TEXTURE_ARRAY) 
+				cfg.SubpassIndex = SP_DEPTH_PREPASS;
+				depthPrepassPipeline = new GraphicPipeline (cfg);
+
+				cfg.depthStencilState.depthCompareOp = VkCompareOp.Equal;
+				cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
+				cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
+				cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
+
+				cfg.SubpassIndex = SP_MODELS;
+
+				if (TEXTURE_ARRAY) 
                     cfg.AddShader (VkShaderStageFlags.Fragment, "#vkChess.net.GBuffPbrTexArray.frag.spv", constants);
                 else
                     cfg.AddShader (VkShaderStageFlags.Fragment, "#vkChess.net.GBuffPbr.frag.spv", constants);
@@ -368,8 +384,18 @@ namespace vkChess {
             renderPass.BeginSubPass(cmd);
 
             if (model != null) {
-                gBuffPipeline.Bind(cmd);
-                model.Bind(cmd);
+				model.Bind (cmd);
+
+				depthPrepassPipeline.Bind (cmd);
+				if (DRAW_INSTACED) {
+					if (instanceBuf != null)
+						model.Draw (cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
+				} else if (mainScene != null)
+					model.Draw (cmd, gBuffPipeline.Layout, mainScene);
+
+				renderPass.BeginSubPass (cmd);
+				gBuffPipeline.Bind(cmd);
+                
                 if (DRAW_INSTACED) {
                     if (instanceBuf != null)
                     	model.Draw(cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
@@ -497,6 +523,7 @@ namespace vkChess {
             composePipeline.Dispose ();
             toneMappingPipeline.Dispose ();
             debugPipeline.Dispose ();
+			depthPrepassPipeline.Dispose ();
 
             descLayoutMain.Dispose ();
             descLayoutTextures?.Dispose ();

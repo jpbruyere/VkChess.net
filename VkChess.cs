@@ -19,9 +19,8 @@ namespace vkChess
 
 	public class VkChess : VkCrowWindow {
 		static void Main (string [] args) {
-			//Instance.DEBUG_UTILS = true;
 			Instance.VALIDATION = true;
-			Instance.RENDER_DOC_CAPTURE = true;
+			//Instance.RENDER_DOC_CAPTURE = true;
 
 			DeferredPbrRenderer.NUM_SAMPLES = VkSampleCountFlags.SampleCount4;
 			DeferredPbrRenderer.DRAW_INSTACED = true;
@@ -37,8 +36,32 @@ namespace vkChess
 			using (VkChess app = new VkChess ())
 				app.Run ();
 		}
+		public override string [] EnabledInstanceExtensions => new string [] {
+			Ext.I.VK_EXT_debug_utils
+		};
+
+		public override string [] EnabledDeviceExtensions => new string [] {
+			Ext.D.VK_KHR_swapchain,
+			Ext.D.VK_EXT_debug_marker
+		};
+		protected override void configureEnabledFeatures (VkPhysicalDeviceFeatures available_features, ref VkPhysicalDeviceFeatures enabled_features) {
+			base.configureEnabledFeatures (available_features, ref enabled_features);
+			enabled_features.samplerAnisotropy = available_features.samplerAnisotropy;
+			enabled_features.sampleRateShading = available_features.sampleRateShading;
+			enabled_features.geometryShader = available_features.geometryShader;
+			//enabled_features.tessellationShader = available_features.tessellationShader;
+			enabled_features.textureCompressionBC = available_features.textureCompressionBC;
+		}
+
+		vke.DebugUtils.Messenger dbgmsg;
 
 		public VkChess (): base() {
+			dbgmsg = new vke.DebugUtils.Messenger (instance, VkDebugUtilsMessageTypeFlagsEXT.PerformanceEXT | VkDebugUtilsMessageTypeFlagsEXT.ValidationEXT | VkDebugUtilsMessageTypeFlagsEXT.GeneralEXT,
+				VkDebugUtilsMessageSeverityFlagsEXT.InfoEXT |
+				VkDebugUtilsMessageSeverityFlagsEXT.WarningEXT |
+				VkDebugUtilsMessageSeverityFlagsEXT.ErrorEXT |
+				VkDebugUtilsMessageSeverityFlagsEXT.VerboseEXT);
+
 			Configuration.Global.Set ("StockfishPath", "/usr/games/stockfish");
 
 			cmds = cmdPool.AllocateCommandBuffer (swapChain.ImageCount);
@@ -67,16 +90,6 @@ namespace vkChess
 			iFace.Load ("ui/chess.crow").DataSource = this;
 		}
 
-		protected override void configureEnabledFeatures (VkPhysicalDeviceFeatures available_features, ref VkPhysicalDeviceFeatures enabled_features) {
-			base.configureEnabledFeatures (available_features, ref enabled_features);
-
-			enabled_features.samplerAnisotropy = available_features.samplerAnisotropy;
-			enabled_features.sampleRateShading = available_features.sampleRateShading;
-			enabled_features.geometryShader = available_features.geometryShader;
-			//enabled_features.tessellationShader = available_features.tessellationShader;
-
-			enabled_features.textureCompressionBC = available_features.textureCompressionBC;
-		}
 
 		Queue transferQ;
 		protected override void createQueues () {
@@ -117,6 +130,17 @@ namespace vkChess
 
 		public static DeferredPbrRenderer curRenderer;
 		bool rebuildBuffers = false;
+		public virtual DeferredPbrRenderer.DebugView CurrentDebugView {
+			get => renderer.currentDebugView;
+			set {
+				if (value == renderer.currentDebugView)
+					return;
+				lock (iFace.UpdateMutex)
+					renderer.currentDebugView = value;
+				rebuildBuffers = true;
+				NotifyValueChanged ("CurrentDebugView", renderer.currentDebugView);
+			}
+		}
 
 		void buildCommandBuffers () {
 			cmdPool.Reset (); //VkCommandPoolResetFlags.ReleaseResources);
@@ -178,7 +202,7 @@ namespace vkChess
 					instanceBuff.Dispose ();
 				}
 			}
-
+			dbgmsg.Dispose ();
 			base.Dispose (disposing);
 		}
 
@@ -324,7 +348,8 @@ namespace vkChess
 			case Glfw.Key.F2:
 				/*loadWindow (@"ui/board.crow", this);
 				NotifyValueChanged ("board", board);*/
-				loadWindow (@"ui/scene.crow", this.renderer.model);
+				//loadWindow (@"ui/scene.crow", this.renderer.model);
+				loadWindow (@"ui/debug.crow", this);
 				break;
 			case Glfw.Key.F3:
 				checkBoardIntegrity ();

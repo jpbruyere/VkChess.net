@@ -67,6 +67,10 @@ CheckBox {
 	Height= "Fit";
 	Width = "80";
 }
+RadioButton {
+	Template = "ui/checkBox.tmp";
+	Height= "Fit";
+}
 Button {
 	Template = "ui/Button.tmp";
 	Height = "Fit";
