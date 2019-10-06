@@ -1,11 +1,49 @@
 ﻿<?xml version="1.0"?>
-<Window Caption="Debug" Icon="#deferred.crow.svg" Left="10" Top="100" Width="20%" Height="70%">
-    <VerticalStack Spacing="1" Margin="10" CacheEnabled="true">     
-        <HorizontalStack Height="Fit">
-            <Label Text="Fps:" Width="80"/>            
-            <Label Text="{fps}" Width="Stretched" TextAlignment="Center"/>    
-        </HorizontalStack>               
-        <EnumSelector Margin="20" EnumValue="{²CurrentDebugView}" />                
-    </VerticalStack>
+<Window Caption="Debug" Icon="#deferred.crow.svg" Left="10" Top="100" Width="40%" Height="70%">
+	<VerticalStack>
+		<Expandable Caption="Pipeline Statistics" Margin="5">
+			<ListBox Data="{StatResults}">
+				<ItemTemplate>
+					<HorizontalStack>
+						<Label Style="labCaption" Text="{StatName}"/>
+						<Label Style="labValue" Text="{Value}" TextAlignment="Right"/>
+					</HorizontalStack>
+				</ItemTemplate>
+			</ListBox>
+		</Expandable>
+		<Expandable Caption="Debug Views" Margin="5">
+		    <VerticalStack Spacing="1" Margin="10" >
+		        <HorizontalStack Height="Fit">
+		            <Label Text="Fps:" Width="80"/>            
+		            <Label Text="{fps}" Width="Stretched" TextAlignment="Center"/>    
+		        </HorizontalStack>               
+		        <EnumSelector Margin="20" EnumValue="{²CurrentDebugView}" />                
+		    </VerticalStack>
+		</Expandable>
+		<Expandable Caption="Materials" Margin="5">
+			<ListBox Data="{Materials}">
+				<ItemTemplate>
+					<VerticalStack Height="Fit" Background="Black" Margin="5">
+						<HorizontalStack Height="Fit">
+							<Label Style="labCaption" Text="base color"/>
+							<Label Style="labValue" Text="{baseColorFactor}" TextAlignment="Right"/>
+						</HorizontalStack>
+						<HorizontalStack Height="Fit">
+							<Label Style="labCaption" Text="emissive"/>
+							<Label Style="labValue" Text="{emissiveFactor}" TextAlignment="Right"/>
+						</HorizontalStack>
+						<HorizontalStack Height="Fit">
+							<Label Style="labCaption" Text="diffuse"/>
+							<Label Style="labValue" Text="{diffuseFactor}" TextAlignment="Right"/>
+						</HorizontalStack>
+						<HorizontalStack Height="Fit">
+							<Label Style="labCaption" Text="specular"/>
+							<Label Style="labValue" Text="{specularFactor}" TextAlignment="Right"/>
+						</HorizontalStack>
+					</VerticalStack>
+				</ItemTemplate>
+			</ListBox>
+		</Expandable>		
+	</VerticalStack>
 </Window>
 

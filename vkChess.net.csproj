@@ -10,7 +10,7 @@
     
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">          
         <DebugType>full</DebugType>
-        <DefineConstants>TRACE;DEBUG;NET471</DefineConstants>
+        <DefineConstants>TRACE;NET471;DEBUG;NETFRAMEWORK;NET472;PIPELINE_STATS</DefineConstants>
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     </PropertyGroup>
 

@@ -113,15 +113,12 @@ namespace vkChess
         const int SP_COMPOSE        = 3;
         const int SP_TONE_MAPPING   = 4;
 
-        string cubemapPath;
-
         public Model.Scene mainScene;
 
         public DeferredPbrRenderer (Device dev, SwapChain swapChain, PresentQueue presentQueue, string cubemapPath, float nearPlane, float farPlane) {
             this.dev = dev;
             this.swapChain = swapChain;
-            this.presentQueue = presentQueue;
-            this.cubemapPath = cubemapPath;
+            this.presentQueue = presentQueue;            
             pipelineCache = new PipelineCache (dev);
 
             descriptorPool = new DescriptorPool (dev, 3,
@@ -134,7 +131,7 @@ namespace vkChess
             uboLights = new HostBuffer<Light> (dev, VkBufferUsageFlags.UniformBuffer, lights, true);
             shadowMapRenderer = new ShadowMapRenderer (dev, this, 32);
 
-            init (nearPlane, farPlane);
+            init (nearPlane, farPlane, cubemapPath);
         }
 
         void init_renderpass () {
@@ -205,7 +202,7 @@ namespace vkChess
                     VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.MemoryRead);
         }
 
-        void init (float nearPlane, float farPlane) {
+        void init (float nearPlane, float farPlane, string cubemapPath) {
             init_renderpass ();
 
             descLayoutMain = new DescriptorSetLayout (dev,

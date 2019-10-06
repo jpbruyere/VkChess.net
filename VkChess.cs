@@ -37,7 +37,9 @@ namespace vkChess
 				app.Run ();
 		}
 		public override string [] EnabledInstanceExtensions => new string [] {
+#if DEBUG
 			Ext.I.VK_EXT_debug_utils
+#endif
 		};
 
 		public override string [] EnabledDeviceExtensions => new string [] {
@@ -51,17 +53,41 @@ namespace vkChess
 			enabled_features.geometryShader = available_features.geometryShader;
 			//enabled_features.tessellationShader = available_features.tessellationShader;
 			enabled_features.textureCompressionBC = available_features.textureCompressionBC;
+#if PIPELINE_STATS
+			enabled_features.pipelineStatisticsQuery = available_features.pipelineStatisticsQuery;
+#endif
 		}
-
+#if PIPELINE_STATS
+		PipelineStatisticsQueryPool statPool;
+		TimestampQueryPool timestampQPool;
+		public class StatResult
+		{
+			public VkQueryPipelineStatisticFlags StatName;
+			public ulong Value;
+		}
+		public StatResult [] StatResults;
+#endif
+#if DEBUG
 		vke.DebugUtils.Messenger dbgmsg;
-
+#endif
 		public VkChess (): base() {
+#if DEBUG
 			dbgmsg = new vke.DebugUtils.Messenger (instance, VkDebugUtilsMessageTypeFlagsEXT.PerformanceEXT | VkDebugUtilsMessageTypeFlagsEXT.ValidationEXT | VkDebugUtilsMessageTypeFlagsEXT.GeneralEXT,
 				VkDebugUtilsMessageSeverityFlagsEXT.InfoEXT |
 				VkDebugUtilsMessageSeverityFlagsEXT.WarningEXT |
 				VkDebugUtilsMessageSeverityFlagsEXT.ErrorEXT |
 				VkDebugUtilsMessageSeverityFlagsEXT.VerboseEXT);
+#endif
+#if PIPELINE_STATS
+			statPool = new PipelineStatisticsQueryPool (dev,
+				VkQueryPipelineStatisticFlags.InputAssemblyVertices |
+				VkQueryPipelineStatisticFlags.InputAssemblyPrimitives |
+				VkQueryPipelineStatisticFlags.ClippingInvocations |
+				VkQueryPipelineStatisticFlags.ClippingPrimitives |
+				VkQueryPipelineStatisticFlags.FragmentShaderInvocations);
 
+			timestampQPool = new TimestampQueryPool (dev);
+#endif
 			Configuration.Global.Set ("StockfishPath", "/usr/games/stockfish");
 
 			cmds = cmdPool.AllocateCommandBuffer (swapChain.ImageCount);
@@ -141,13 +167,21 @@ namespace vkChess
 				NotifyValueChanged ("CurrentDebugView", renderer.currentDebugView);
 			}
 		}
+		public PbrModelTexArray.Material[] Materials =>
+			(renderer.model as PbrModelTexArray).materials;
 
 		void buildCommandBuffers () {
 			cmdPool.Reset (); //VkCommandPoolResetFlags.ReleaseResources);
 
 			for (int i = 0; i < swapChain.ImageCount; ++i) {
 				cmds [i].Start ();
+#if PIPELINE_STATS
+				statPool.Begin (cmds[i]);
 				renderer.recordDraw (cmds[i], i, instanceBuff, instancedCmds?.ToArray ());
+				statPool.End (cmds[i]);
+#else
+				renderer.recordDraw (cmds [i], i, instanceBuff, instancedCmds?.ToArray ());
+#endif
 				cmds [i].End ();
 			}
 		}
@@ -166,6 +200,13 @@ namespace vkChess
 		public override void Update () {
 			base.Update ();
 
+#if PIPELINE_STATS
+			ulong [] results = statPool.GetResults ();
+			StatResults = new StatResult [statPool.RequestedStats.Length];
+			for (int i = 0; i < statPool.RequestedStats.Length; i++)
+				StatResults [i] = new StatResult { StatName = statPool.RequestedStats [i], Value = results [i] };
+			NotifyValueChanged ("StatResults", StatResults);
+#endif
 			if (updateInstanceCmds) {
 				updateDrawCmdList ();
 				rebuildBuffers = true;
@@ -202,7 +243,13 @@ namespace vkChess
 					instanceBuff.Dispose ();
 				}
 			}
+#if DEBUG
 			dbgmsg.Dispose ();
+#endif
+#if PIPELINE_STATS
+			timestampQPool?.Dispose ();
+			statPool?.Dispose ();
+#endif
 			base.Dispose (disposing);
 		}
 
