@@ -81,13 +81,11 @@ namespace vkChess {
 			cfg.AddVertexBinding<PbrModelTexArray.Vertex> (0);
 			cfg.AddVertexAttributes (0, VkFormat.R32g32b32Sfloat);
 
-			if (DRAW_INSTACED) {
-				cfg.AddVertexBinding<VkChess.InstanceData> (1, VkVertexInputRate.Instance);
-				cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 1, VkFormat.R32g32b32a32Sfloat, 16));
-				cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 2, VkFormat.R32g32b32a32Sfloat, 32));
-				cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 3, VkFormat.R32g32b32a32Sfloat, 48));
-				cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 4, VkFormat.R32g32b32a32Sfloat, 64));
-			}
+			cfg.AddVertexBinding<VkChess.InstanceData> (1, VkVertexInputRate.Instance);
+			cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 1, VkFormat.R32g32b32a32Sfloat, 16));
+			cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 2, VkFormat.R32g32b32a32Sfloat, 32));
+			cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 3, VkFormat.R32g32b32a32Sfloat, 48));
+			cfg.vertexAttributes.Add (new VkVertexInputAttributeDescription (1, 4, VkFormat.R32g32b32a32Sfloat, 64));
 
 			cfg.AddShader (VkShaderStageFlags.Vertex, "#vkChess.net.shadow.vert.spv");
 			cfg.AddShader (VkShaderStageFlags.Geometry, "#vkChess.net.shadow.geom.spv");
@@ -139,10 +137,7 @@ namespace vkChess {
 
             if (renderer.model != null) {
                 renderer.model.Bind(cmd);
-                if (DRAW_INSTACED) {
-                    renderer.model.Draw(cmd, shadowPipeline.Layout, instanceBuf, true, instances);
-                } else
-                    renderer.model.Draw(cmd, shadowPipeline.Layout, renderer.mainScene);
+                renderer.model.Draw(cmd, shadowPipeline.Layout, instanceBuf, true, instances);
             }
 
 			shadowPass.End (cmd);

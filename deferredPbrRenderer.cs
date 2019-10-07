@@ -12,7 +12,6 @@ namespace vkChess
         SwapChain swapChain;
         public PresentQueue presentQueue;
 
-        public static bool DRAW_INSTACED = false;
         public static int MAX_MATERIAL_COUNT = 8;
         public static VkSampleCountFlags NUM_SAMPLES = VkSampleCountFlags.SampleCount1;
         public static VkFormat HDR_FORMAT = VkFormat.R32g32b32a32Sfloat;
@@ -32,8 +31,6 @@ namespace vkChess
             irradiance,
             shadowMap
         }
-
-        public static bool TEXTURE_ARRAY;
 
         public DebugView currentDebugView = DebugView.none;
         public int lightNumDebug = 0;
@@ -90,7 +87,7 @@ namespace vkChess
         Image gbColorRough, gbEmitMetal, gbN_AO, gbPos, hdrImg;
 
         DescriptorPool descriptorPool;
-        DescriptorSetLayout descLayoutMain, descLayoutTextures, descLayoutGBuff;
+        DescriptorSetLayout descLayoutMain, descLayoutGBuff;
         DescriptorSet dsMain, dsGBuff;
 
         public PipelineCache pipelineCache;
@@ -211,23 +208,10 @@ namespace vkChess
                 new VkDescriptorSetLayoutBinding (2, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//prefil
                 new VkDescriptorSetLayoutBinding (3, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//lut brdf
                 new VkDescriptorSetLayoutBinding (4, VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer),//lights
-                new VkDescriptorSetLayoutBinding (5, VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer));//materials
-            descLayoutMain.Bindings.Add (new VkDescriptorSetLayoutBinding (6, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler));//shadow map
-
-
-            if (TEXTURE_ARRAY) {
-                descLayoutMain.Bindings.Add (new VkDescriptorSetLayoutBinding (7, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler));//texture array
-            } else { 
-                descLayoutTextures = new DescriptorSetLayout (dev,
-                    new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-                    new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-                    new VkDescriptorSetLayoutBinding (2, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-                    new VkDescriptorSetLayoutBinding (3, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-                    new VkDescriptorSetLayoutBinding (4, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler)
-                ); 
-            }
-
-			descLayoutMain.Bindings.Add (new VkDescriptorSetLayoutBinding (8, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler));//uiImage
+                new VkDescriptorSetLayoutBinding (5, VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer),//materials
+            	new VkDescriptorSetLayoutBinding (6, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//shadow map
+				new VkDescriptorSetLayoutBinding (7, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//texture array
+				new VkDescriptorSetLayoutBinding (8, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler));//uiImage
 
 			descLayoutGBuff = new DescriptorSetLayout (dev,
                 new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Fragment, VkDescriptorType.InputAttachment),//color + roughness
@@ -244,41 +228,27 @@ namespace vkChess
                 cfg.multisampleState.minSampleShading = 0.5f;
             }
             cfg.Cache = pipelineCache;
-            if (TEXTURE_ARRAY) 
-                cfg.Layout = new PipelineLayout (dev, descLayoutMain, descLayoutGBuff);
-             else 
-                cfg.Layout = new PipelineLayout (dev, descLayoutMain, descLayoutGBuff, descLayoutTextures);
+			cfg.Layout = new PipelineLayout (dev,
+				new VkPushConstantRange[] {
+					new VkPushConstantRange (VkShaderStageFlags.Vertex, (uint)Marshal.SizeOf<Matrix4x4> ()),
+					new VkPushConstantRange (VkShaderStageFlags.Fragment, sizeof (int), 64)},
+				descLayoutMain, descLayoutGBuff);
 
-            /*if (DRAW_INSTACED)
-                cfg.Layout.AddPushConstants (                
-                    new VkPushConstantRange (VkShaderStageFlags.Fragment, sizeof (int))
-                );
-            else*/
-                cfg.Layout.AddPushConstants(
-                    new VkPushConstantRange(VkShaderStageFlags.Vertex, (uint)Marshal.SizeOf<Matrix4x4>()),
-                    new VkPushConstantRange(VkShaderStageFlags.Fragment, sizeof(int), 64)
-                );
-  
-            cfg.RenderPass = renderPass;
+			cfg.RenderPass = renderPass;
             cfg.SubpassIndex = SP_MODELS;
             //cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
 
             cfg.AddVertexBinding<PbrModelTexArray.Vertex> (0);
             cfg.AddVertexAttributes (0, VkFormat.R32g32b32Sfloat, VkFormat.R32g32b32Sfloat, VkFormat.R32g32Sfloat, VkFormat.R32g32Sfloat);
 
-            if (DRAW_INSTACED) {
-                cfg.AddVertexBinding<VkChess.InstanceData>(1, VkVertexInputRate.Instance);
-                cfg.AddVertexAttributes(1, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat);
-            }
+            cfg.AddVertexBinding<VkChess.InstanceData>(1, VkVertexInputRate.Instance);
+            cfg.AddVertexAttributes(1, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R32g32b32a32Sfloat);
 
             using (SpecializationInfo constants = new SpecializationInfo (
                         new SpecializationConstant<float> (0, nearPlane),
                         new SpecializationConstant<float> (1, farPlane),
                         new SpecializationConstant<float> (2, MAX_MATERIAL_COUNT))) {
-                if (DRAW_INSTACED)
-                    cfg.AddShader(VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbrInstanced.vert.spv");
-                else
-                    cfg.AddShader(VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbr.vert.spv");
+                cfg.AddShader(VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbrInstanced.vert.spv");
 
 				cfg.SubpassIndex = SP_DEPTH_PREPASS;
 				depthPrepassPipeline = new GraphicPipeline (cfg);
@@ -290,10 +260,7 @@ namespace vkChess
 
 				cfg.SubpassIndex = SP_MODELS;
 
-				if (TEXTURE_ARRAY) 
-                    cfg.AddShader (VkShaderStageFlags.Fragment, "#vkChess.net.GBuffPbrTexArray.frag.spv", constants);
-                else
-                    cfg.AddShader (VkShaderStageFlags.Fragment, "#vkChess.net.GBuffPbr.frag.spv", constants);
+                cfg.AddShader (VkShaderStageFlags.Fragment, "#vkChess.net.GBuffPbrTexArray.frag.spv", constants);
 
                 gBuffPipeline = new GraphicPipeline (cfg);
             }
@@ -343,27 +310,12 @@ namespace vkChess
 
         public void LoadModel (Queue transferQ, string path) {
             dev.WaitIdle ();
+
             model?.Dispose ();
+            model = new PbrModelTexArray (transferQ, path);
 
-            if (TEXTURE_ARRAY) {
-                model = new PbrModelTexArray (transferQ, path);
-
-                DescriptorSetWrites uboUpdate = new DescriptorSetWrites (dsMain, descLayoutMain.Bindings[5], descLayoutMain.Bindings[7]);
-                uboUpdate.Write (dev, model.materialUBO.Descriptor, (model as PbrModelTexArray).texArray.Descriptor);
-
-            } else {
-                model = new PbrModelSeparatedTextures (transferQ, path,
-                    descLayoutTextures,
-                    AttachmentType.Color,
-                    AttachmentType.PhysicalProps,
-                    AttachmentType.Normal,
-                    AttachmentType.AmbientOcclusion,
-                    AttachmentType.Emissive);
-
-                DescriptorSetWrites uboUpdate = new DescriptorSetWrites (dsMain, descLayoutMain.Bindings[5]);
-                uboUpdate.Write (dev, model.materialUBO.Descriptor);
-            }
-
+            DescriptorSetWrites uboUpdate = new DescriptorSetWrites (dsMain, descLayoutMain.Bindings[5], descLayoutMain.Bindings[7]);
+            uboUpdate.Write (dev, model.materialUBO.Descriptor, (model as PbrModelTexArray).texArray.Descriptor);
 
             modelAABB = model.DefaultScene.AABB;
         }
@@ -384,20 +336,14 @@ namespace vkChess
 				model.Bind (cmd);
 
 				depthPrepassPipeline.Bind (cmd);
-				if (DRAW_INSTACED) {
-					if (instanceBuf != null)
-						model.Draw (cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
-				} else if (mainScene != null)
-					model.Draw (cmd, gBuffPipeline.Layout, mainScene);
+				if (instanceBuf != null)
+					model.Draw (cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
 
 				renderPass.BeginSubPass (cmd);
 				gBuffPipeline.Bind(cmd);
                 
-                if (DRAW_INSTACED) {
-                    if (instanceBuf != null)
-                    	model.Draw(cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
-                } else if (mainScene != null)
-                    model.Draw(cmd, gBuffPipeline.Layout, mainScene);
+                if (instanceBuf != null)
+                	model.Draw(cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
             }
             renderPass.BeginSubPass(cmd);
 
@@ -522,8 +468,7 @@ namespace vkChess
             debugPipeline.Dispose ();
 			depthPrepassPipeline.Dispose ();
 
-            descLayoutMain.Dispose ();
-            descLayoutTextures?.Dispose ();
+            descLayoutMain.Dispose ();            
             descLayoutGBuff.Dispose ();
 
             uboMatrices.Dispose ();

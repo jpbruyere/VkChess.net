@@ -21,10 +21,8 @@ namespace vkChess
 		static void Main (string [] args) {
 			Instance.VALIDATION = true;
 			//Instance.RENDER_DOC_CAPTURE = true;
-
+			//SwapChain.PREFERED_FORMAT = VkFormat.B8g8r8a8Unorm;
 			DeferredPbrRenderer.NUM_SAMPLES = VkSampleCountFlags.SampleCount4;
-			DeferredPbrRenderer.DRAW_INSTACED = true;
-			DeferredPbrRenderer.TEXTURE_ARRAY = true;
 			DeferredPbrRenderer.MAX_MATERIAL_COUNT = 5;
 			DeferredPbrRenderer.MRT_FORMAT = VkFormat.R16g16b16a16Sfloat;
 			DeferredPbrRenderer.HDR_FORMAT = VkFormat.R16g16b16a16Sfloat;
@@ -169,6 +167,18 @@ namespace vkChess
 		}
 		public PbrModelTexArray.Material[] Materials =>
 			(renderer.model as PbrModelTexArray).materials;
+
+		Color currentColor = Color.Red;
+
+		public Color CurrentColor {
+			get => currentColor;
+			set {
+				if (currentColor == value)
+					return;
+				currentColor = value;
+				NotifyValueChanged ("CurrentColor", currentColor);
+			}
+		}
 
 		void buildCommandBuffers () {
 			cmdPool.Reset (); //VkCommandPoolResetFlags.ReleaseResources);
@@ -471,7 +481,9 @@ namespace vkChess
 				break;
 			}
 		}
-
+		void onQuitClick (object sender, MouseButtonEventArgs e) {
+			//Close ();
+		}
 		void onUndoClick (object sender, MouseButtonEventArgs e) {
 			bool hintIsEnabled = EnableHint;
 			EnableHint = false;

@@ -2,20 +2,20 @@
 <Window Font="droid bold, 40" Height="50%" Width="60%" Caption="New Game">
 	<Container>
 		<VerticalStack Margin="30" Spacing="5">
-			<HorizontalStack Height="80%" Margin="3">
-				<Border Width="50%" Margin="10" CornerRadius="5" Focusable="true"
+			<HorizontalStack Height="80%" Margin="3" Spacing="20">
+				<Border Width="50%" Margin="5" CornerRadius="5" Focusable="true" Background="DimGrey"
 					MouseEnter="{Background=SteelBlue}"
-					MouseLeave="{Background=Transparent}"
+					MouseLeave="{Background=DimGrey}"
 					MouseClick="onNewWhiteGame">
 					<Image Margin="5"
-						Path="data/Pieces.svg" SvgSub="bq"/>
+						Path="data/Pieces.svg" SvgSub="wp"/>
 				</Border>
-				<Border Width="50%" Margin="10" CornerRadius="5" Focusable="true"
+				<Border Width="50%" Margin="5" CornerRadius="5" Focusable="true" Background="DimGrey"
 					MouseEnter="{Background=SteelBlue}"
-					MouseLeave="{Background=Transparent}"
+					MouseLeave="{Background=DimGrey}"
 					MouseClick="onNewBlackGame">
 					<Image Margin="5"
-						Path="data/Pieces.svg" SvgSub="br"/>
+						Path="data/Pieces.svg" SvgSub="bp"/>
 				</Border>
 			</HorizontalStack>
 			<Button Height="Fit" Width="40%" Style="#Chess.gui.Button.style" HorizontalAlignment="Right" Caption="Cancel"

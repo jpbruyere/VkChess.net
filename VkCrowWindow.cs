@@ -23,6 +23,9 @@ namespace vke {
 		protected Crow.Interface iFace;
 		public bool MouseIsInInterface =>
 			iFace.HoverWidget != null;
+		public Device Dev => dev;
+		public CommandPool CmdPool => cmdPool;
+		public Queue GraphicQueue => presentQueue;
 
 		protected DescriptorSetWrites uiImageUpdate;
 
@@ -76,7 +79,7 @@ namespace vke {
 			iFace.surf?.Dispose ();
 			uiImage?.Dispose ();
 
-			uiImage = new Image (dev, VkFormat.B8g8r8a8Unorm, VkImageUsageFlags.Sampled,
+			uiImage = new Image (dev, VkFormat.B8g8r8a8Srgb, VkImageUsageFlags.Sampled,
 				VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent, Width, Height, VkImageType.Image2D,
 				VkSampleCountFlags.SampleCount1, VkImageTiling.Linear);
 			uiImage.CreateView (VkImageViewType.ImageView2D, VkImageAspectFlags.Color);
@@ -139,15 +142,40 @@ namespace vke {
 			throw new NotImplementedException ();
 		}
 
-		public Crow.MouseCursor Cursor { set => throw new NotImplementedException (); }
-
 		public bool Shift => throw new NotImplementedException ();
 
 		public bool Ctrl => throw new NotImplementedException ();
 
 		public bool Alt => throw new NotImplementedException ();
 
-		Crow.MouseCursor Crow.IBackend.Cursor { set { }  }
+		Crow.MouseCursor Crow.IBackend.Cursor {
+			set {
+				CursorShape cs = CursorShape.Arrow;
+
+				switch (value) {
+				case MouseCursor.IBeam:
+					cs = CursorShape.IBeam;
+					break;
+				case MouseCursor.Crosshair:
+					cs = CursorShape.Crosshair;
+					break;
+				case MouseCursor.Hand:
+					cs = CursorShape.Hand;
+					break;
+				case MouseCursor.H:
+				case MouseCursor.Right:
+				case MouseCursor.Left:
+					cs = CursorShape.HResize;
+					break;
+				case MouseCursor.V:
+				case MouseCursor.Top:
+				case MouseCursor.Bottom:
+					cs = CursorShape.VResize;
+					break;
+				}
+				SetCursor (cs);
+			}
+		}
 		#endregion
 	}
 }

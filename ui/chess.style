@@ -106,3 +106,16 @@ labValue {
 	Foreground="Black";
 	Width="Stretched";
 }
+labColor {
+	Margin="2";	
+	Width="Fit";
+}
+labColorV {
+	Margin="1";		
+	Width="Fit";
+}
+ColorSlider {
+	Focusable="true";
+	Height="14";
+	Margin="0";
+}

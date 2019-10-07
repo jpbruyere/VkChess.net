@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0"?>
-<Window Caption="Debug" Icon="#deferred.crow.svg" Left="10" Top="100" Width="40%" Height="70%">
-	<VerticalStack>
+<Window Caption="Debug" Icon="#deferred.crow.svg" Left="10" Top="10" Width="40%" Height="90%">
+	<VerticalStack Margin="5">
 		<Expandable Caption="Pipeline Statistics" Margin="5">
 			<ListBox Data="{StatResults}">
 				<ItemTemplate>
@@ -43,7 +43,46 @@
 					</VerticalStack>
 				</ItemTemplate>
 			</ListBox>
-		</Expandable>		
+		</Expandable>
+		<ColorWheel Name="cw" Width="100" Height="100"/>
+		<Slider SmallIncrement="0.01" LargeIncrement="0.1" Height="10" Minimum="0.0" Maximum="2.0" Value="{²../cw.InnerRadius}"/>
+		<HueSelector Focusable="true" Height="15" Hue="{²../cw.Hue}"/>
+		<Widget Width="30" Height="16" Background="{CurrentColor}"/>
+		<HorizontalStack Height="Fit">
+			<Label Style="labColor" Text="R:"/>
+			<ColorSlider Name="cs" Component="Red" CurrentColor="{²CurrentColor}"/>			
+			<Label Style="labColorV" Text="{../cs.CurrentValue}" />
+		</HorizontalStack>
+		<HorizontalStack Height="Fit">
+			<Label Style="labColor" Text="G:"/>
+			<ColorSlider Name="cs" Component="Green" CurrentColor="{²CurrentColor}"/>
+			<Label Style="labColorV" Text="{../cs.CurrentValue}" />
+		</HorizontalStack>
+		<HorizontalStack Height="Fit">
+			<Label Style="labColor" Text="B:"/>
+			<ColorSlider Name="cs" Component="Blue" CurrentColor="{²CurrentColor}"/>
+			<Label Style="labColorV" Text="{../cs.CurrentValue}" />
+		</HorizontalStack>
+		<HorizontalStack Height="Fit">
+			<Label Style="labColor" Text="A:"/>
+			<ColorSlider Name="cs" Component="Alpha" CurrentColor="{²CurrentColor}"/>
+			<Label Style="labColorV" Text="{../cs.CurrentValue}" />
+		</HorizontalStack>
+		<HorizontalStack Height="Fit">
+			<Label Style="labColor" Text="H:"/>
+			<ColorSlider Name="cs" Component="Hue" CurrentColor="{²CurrentColor}"/>
+			<Label Style="labColorV" Text="{../cs.CurrentValue}" />
+		</HorizontalStack>
+		<HorizontalStack Height="Fit">
+			<Label Style="labColor" Text="S:"/>
+			<ColorSlider Name="cs" Component="Saturation" CurrentColor="{²CurrentColor}"/>
+			<Label Style="labColorV" Text="{../cs.CurrentValue}" />
+		</HorizontalStack>			
+		<HorizontalStack Height="Fit">
+			<Label Style="labColor" Text="V:"/>
+			<ColorSlider Name="cs" Component="Value" CurrentColor="{²CurrentColor}"/>
+			<Label Style="labColorV" Text="{../cs.CurrentValue}" />
+		</HorizontalStack>
 	</VerticalStack>
 </Window>
 
