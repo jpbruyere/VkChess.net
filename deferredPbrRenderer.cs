@@ -99,7 +99,7 @@ namespace vkChess
         RenderPass renderPass;
 
         public PbrModel model { get; private set; }
-        public EnvironmentCube envCube;
+        public vke.Environment.EnvironmentCube envCube;
         public ShadowMapRenderer shadowMapRenderer;
 
         public BoundingBox modelAABB;
@@ -276,7 +276,7 @@ namespace vkChess
             using (SpecializationInfo constants = new SpecializationInfo (
                 new SpecializationConstant<uint> (0, (uint)lights.Length),
 				new SpecializationConstant<float> (1, 0.25f))) {
-                cfg.AddShader (VkShaderStageFlags.Vertex, "#vkChess.net.FullScreenQuad.vert.spv");
+                cfg.AddShader (VkShaderStageFlags.Vertex, "#vke.FullScreenQuad.vert.spv");
                 cfg.AddShader (VkShaderStageFlags.Fragment, "#vkChess.net.compose_with_shadows.frag.spv", constants);
                 composePipeline = new GraphicPipeline (cfg);
             }
@@ -292,7 +292,7 @@ namespace vkChess
             dsMain = descriptorPool.Allocate (descLayoutMain);
             dsGBuff = descriptorPool.Allocate (descLayoutGBuff);
 
-            envCube = new EnvironmentCube (cubemapPath, dsMain, gBuffPipeline.Layout, presentQueue, renderPass);
+            envCube = new vke.Environment.EnvironmentCube (cubemapPath, dsMain, gBuffPipeline.Layout, presentQueue, renderPass);
 
             matrices.prefilteredCubeMipLevels = envCube.prefilterCube.CreateInfo.mipLevels;
 

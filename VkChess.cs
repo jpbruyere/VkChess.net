@@ -224,7 +224,7 @@ namespace vkChess
 			if (Animation.HasAnimations)
 				renderer.shadowMapRenderer.updateShadowMap = true;
 
-			animationSteps = (int)fps / 5;
+			animationSteps = 5 + (int)fps / 5;
 
 			Animation.ProcessAnimations ();
 			Piece.FlushHostBuffer ();
@@ -482,24 +482,26 @@ namespace vkChess
 			}
 		}
 		void onQuitClick (object sender, MouseButtonEventArgs e) {
-			//Close ();
+			Close ();
 		}
 		void onUndoClick (object sender, MouseButtonEventArgs e) {
-			bool hintIsEnabled = EnableHint;
-			EnableHint = false;
+			lock (movesMutex) {
+				bool hintIsEnabled = EnableHint;
+				EnableHint = false;
 
-			GameState lastState = currentState;
-			if ((currentState != GameState.Pad && currentState != GameState.Checkmate) || !playerIsAi (CurrentPlayer))//undo ai move
-				undoLastMove ();			
-			
-			undoLastMove ();
-			//to have checkColor removed
-			currentState = lastState;
-			CurrentState = GameState.Play;
-			startTurn ();
-			NotifyValueChanged ("board", board);
+				GameState lastState = currentState;
+				if ((currentState != GameState.Pad && currentState != GameState.Checkmate) || !playerIsAi (CurrentPlayer))//undo ai move
+					undoLastMove ();
 
-			EnableHint = hintIsEnabled;
+				undoLastMove ();
+				//to have checkColor removed
+				currentState = lastState;
+				CurrentState = GameState.Play;
+				startTurn ();
+				NotifyValueChanged ("board", board);
+
+				EnableHint = hintIsEnabled;
+			}
 		}
 		void onNewGameClick (object sender, MouseButtonEventArgs e) {
 			loadWindow ("ui/newGame.crow", this);
@@ -614,11 +616,11 @@ namespace vkChess
 				return;
 			logBuffer.Add (msg);
 			NotifyValueChanged ("LogBuffer", logBuffer);
-			Console.WriteLine (msg);
 		}
 		#endregion
 
 		#region Stockfish
+		object movesMutex = new object ();
 		Process stockfish;
 		volatile bool waitAnimationFinished;
 		volatile bool stockfishIsReady;
@@ -793,45 +795,48 @@ namespace vkChess
 			if (string.IsNullOrEmpty (e.Data))
 				return;
 
-			string [] tmp = e.Data.Split (' ');
+			lock (movesMutex) {
 
-			//if (tmp [0] != "readyok")
+				string [] tmp = e.Data.Split (' ');
+
+				//if (tmp [0] != "readyok")
 				AddLog ("=> " + e.Data);
 
-			switch (tmp [0]) {
-			case "readyok":
-				stockfishIsReady = true;
-				startTurn ();
-				return;
-			case "uciok":
-				//NotifyValueChanged ("StockfishNotFound", false);
-				//sendToStockfish ("setoption name Skill Level value " + StockfishLevel.ToString ());
-				break;
-			case "info":
-				if (playerIsAi (CurrentPlayer) || !enableHint)
+				switch (tmp [0]) {
+				case "readyok":
+					stockfishIsReady = true;
+					startTurn ();
+					return;
+				case "uciok":
+					//NotifyValueChanged ("StockfishNotFound", false);
+					//sendToStockfish ("setoption name Skill Level value " + StockfishLevel.ToString ());
 					break;
-				if (string.Compare (tmp [3], "seldepth", StringComparison.Ordinal) != 0)
-					return;
-				if (string.Compare (tmp [18], "pv", StringComparison.Ordinal) != 0)
-					return;
-				BestMove = tmp [19];
-				break;
-			case "bestmove":
-				if (tmp [1] == "(none)") {
-					if (checkKingIsSafe ())
-						CurrentState = GameState.Pad;
-					else
-						CurrentState = GameState.Checkmate;
-					return;
+				case "info":
+					if (playerIsAi (CurrentPlayer) || !enableHint)
+						break;
+					if (string.Compare (tmp [3], "seldepth", StringComparison.Ordinal) != 0)
+						return;
+					if (string.Compare (tmp [18], "pv", StringComparison.Ordinal) != 0)
+						return;
+					BestMove = tmp [19];
+					break;
+				case "bestmove":
+					if (tmp [1] == "(none)") {
+						if (checkKingIsSafe ())
+							CurrentState = GameState.Pad;
+						else
+							CurrentState = GameState.Checkmate;
+						return;
+					}
+
+					if (playerIsAi (CurrentPlayer)) {
+						processMove (tmp [1]);
+						switchPlayer ();
+					} else if (enableHint)
+						switchPlayer ();
+
+					break;
 				}
-
-				if (playerIsAi (CurrentPlayer)) {
-					processMove (tmp [1]);
-					switchPlayer ();
-				} else if (enableHint)
-					switchPlayer ();
-
-				break;
 			}
 		}
 

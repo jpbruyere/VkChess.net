@@ -76,8 +76,15 @@ Button {
 	Height = "Fit";
 	Width = "80";
 }
+Menu {
+	Margin="0";
+	Spacing="0";
+	Background = "Transparent";
+}
 MenuItem {
 	Template = "ui/MenuItem.tmp";
+	Background = "Transparent";
+	Margin = "0";
 }
 Slider {
 	Foreground = "Jet";

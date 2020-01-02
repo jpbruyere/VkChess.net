@@ -2,56 +2,39 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>net472;netstandard2.0</TargetFrameworks>
-<!--        <TargetFrameworks>net471</TargetFrameworks>        -->
+        <TargetFrameworks>net472</TargetFrameworks>
         <EnableDefaultNoneItems>false</EnableDefaultNoneItems>   
-        <OutputPath>$(SolutionDir)build\$(Configuration)\</OutputPath>          
+        <OutputPath>$(SolutionDir)build\$(Configuration)\</OutputPath>
+		<IntermediateOutputPath>$(SolutionDir)build\obj\$(Configuration)\</IntermediateOutputPath>
     </PropertyGroup>
     
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">          
         <DebugType>full</DebugType>
-        <DefineConstants>TRACE;NET471;DEBUG;NETFRAMEWORK;NET472;_PIPELINE_STATS</DefineConstants>
+        <DefineConstants>TRACE;DEBUG;_PIPELINE_STATS</DefineConstants>
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     </PropertyGroup>
     
-    <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-      <Reference Include="System" />
-      <Reference Include="System.Data" />              
-      <Reference Include="System.Data.Linq" />
-    </ItemGroup>
-
     <ItemGroup>    
         <GLSLShader Include="shaders\**\*.frag;shaders\**\*.vert;shaders\**\*.comp;shaders\**\*.geom" />
-        <None Include="data\**\*.*">      
+        <None Include="data\**\*.*;ui\**\*.*">      
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-<!--            <Link>data\%(RecursiveDir)%(Filename)%(Extension)</Link>-->
         </None>        
-        <None Include="ui\**\*.*">      
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>            
-        </None>  
 		<EmbeddedResource Include="ui\*.style" />		
     </ItemGroup>    
     
     <ItemGroup>
-		<PackageReference Include="SpirVTasks" Version="0.1.11-beta" />
-        <!--<PackageReference Include="Crow.VK" Version="0.9.0-beta" />-->
-		<!--<PackageReference Include="Crow" Version="0.8.4.1-beta" />-->
-        <PackageReference Include="vke" Version="0.1.8-beta" />
+		<PackageReference Include="SpirVTasks" Version="0.1.15-beta" />        
+		<PackageReference Include="Crow" Version="0.8.5-beta" />
+        <PackageReference Include="vke" Version="0.1.9-beta" />
         <PackageReference Include="vke.gltfLoader" Version="0.1.7-beta" />
+        <PackageReference Include="vke.EnvironmentPipeline" Version="0.1.0-beta" />
+		<!--<ProjectReference Include="..\..\Crow\Crow\Crow.csproj" />-->
     </ItemGroup>
 	
     <ItemGroup>
       <Compile Remove="DebuDrawPipeline.cs;CrowWin.cs;build\**\*.cs" />      
-    </ItemGroup>
-    <ItemGroup>
-      <None Remove="ui\chess.style" />
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\..\Crow\Crow\Crow.csproj" />
-		<!--<ProjectReference Include="..\vk.net\vke\CVKL.csproj" />
-      <ProjectReference Include="..\vk.net\CVKL.Addons\gltfLoader\gltfLoader.csproj" />-->         
     </ItemGroup>
 </Project>

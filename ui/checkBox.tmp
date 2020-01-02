@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0"?>
-<Border Margin="0" Foreground="Jet" Background="{./Background}" MouseEnter="{Foreground=White}" MouseLeave="{Foreground=Jet}">
+<Border Margin="0" Foreground="Transparent" Background="{./Background}" MouseEnter="{Foreground=White}" MouseLeave="{Foreground=Transparent}">
 	<Group Margin="1">			
 		<Label Margin="3" Font="{./Font}" Foreground="{./Foreground}" Text="{./Caption}"/>
 		<Widget Height="Stretched" Background="0.1,0.3,0.9,0.3" Visible="{./IsChecked}"/>

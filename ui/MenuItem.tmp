@@ -17,7 +17,7 @@
 			</Template>		
 		</CheckBox>
 	</Template>
-	<Border Foreground="DimGrey" Width="{../PopWidth}" Height="{../PopHeight}" Background="vgradient|0:DimGrey|1:Black">
+	<Border Foreground="{../Foreground}" Width="{../PopWidth}" Height="{../PopHeight}">
 		<VerticalStack Name="ItemsContainer"/>
 	</Border>
 </Popper>

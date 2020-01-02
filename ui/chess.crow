@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0"?>
-<HorizontalStack Height="Fit" Background="vgradient|0:Grey|0.2:Jet|0.8:Jet|1:Black" VerticalAlignment="Bottom" Margin="2">
+<HorizontalStack Height="Fit" Background="vgradient|0:Grey|0.3:Jet|0.7:Jet|1:Black" VerticalAlignment="Bottom" Margin="0">
 	<Menu>
 		<MenuItem Caption="File" Width="Fit">
 			<MenuItem Caption="New" />

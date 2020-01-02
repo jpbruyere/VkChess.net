@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vkChess.net", "vkChess.net.csproj", "{C7D934D4-E947-4AD8-978F-D2C2A98F4508}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crow", "..\..\Crow\Crow\Crow.csproj", "{21C3517E-425D-4DC5-B627-4929215195AB}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,10 +13,6 @@ Global
 		{C7D934D4-E947-4AD8-978F-D2C2A98F4508}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7D934D4-E947-4AD8-978F-D2C2A98F4508}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7D934D4-E947-4AD8-978F-D2C2A98F4508}.Release|Any CPU.Build.0 = Release|Any CPU
-		{21C3517E-425D-4DC5-B627-4929215195AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{21C3517E-425D-4DC5-B627-4929215195AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{21C3517E-425D-4DC5-B627-4929215195AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{21C3517E-425D-4DC5-B627-4929215195AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		Policies = $0
