@@ -22,12 +22,12 @@ namespace vkChess
 			Instance.VALIDATION = true;
 			//Instance.RENDER_DOC_CAPTURE = true;
 			//SwapChain.PREFERED_FORMAT = VkFormat.B8g8r8a8Unorm;
-			DeferredPbrRenderer.NUM_SAMPLES = VkSampleCountFlags.SampleCount4;
+			DeferredPbrRenderer.NUM_SAMPLES = VkSampleCountFlags.SampleCount8;
 			DeferredPbrRenderer.MAX_MATERIAL_COUNT = 5;
-			DeferredPbrRenderer.MRT_FORMAT = VkFormat.R16g16b16a16Sfloat;
-			DeferredPbrRenderer.HDR_FORMAT = VkFormat.R16g16b16a16Sfloat;
-			PbrModelTexArray.TEXTURE_DIM = 512;
-			ShadowMapRenderer.SHADOWMAP_SIZE = 1024;
+			DeferredPbrRenderer.MRT_FORMAT = VkFormat.R32g32b32a32Sfloat;
+			DeferredPbrRenderer.HDR_FORMAT = VkFormat.R32g32b32a32Sfloat;
+			PbrModelTexArray.TEXTURE_DIM = 1024;
+			ShadowMapRenderer.SHADOWMAP_SIZE = 2048;
 
 
 
@@ -36,13 +36,12 @@ namespace vkChess
 		}
 		public override string [] EnabledInstanceExtensions => new string [] {
 #if DEBUG
-			Ext.I.VK_EXT_debug_utils
+			Ext.I.VK_EXT_debug_utils,
 #endif
 		};
 
 		public override string [] EnabledDeviceExtensions => new string [] {
 			Ext.D.VK_KHR_swapchain,
-			Ext.D.VK_EXT_debug_marker
 		};
 		protected override void configureEnabledFeatures (VkPhysicalDeviceFeatures available_features, ref VkPhysicalDeviceFeatures enabled_features) {
 			base.configureEnabledFeatures (available_features, ref enabled_features);
@@ -68,10 +67,12 @@ namespace vkChess
 #if DEBUG
 		vke.DebugUtils.Messenger dbgmsg;
 #endif
-		public VkChess (): base() {
+		protected override void initVulkan () {
+			base.initVulkan ();
+
 #if DEBUG
 			dbgmsg = new vke.DebugUtils.Messenger (instance, VkDebugUtilsMessageTypeFlagsEXT.PerformanceEXT | VkDebugUtilsMessageTypeFlagsEXT.ValidationEXT | VkDebugUtilsMessageTypeFlagsEXT.GeneralEXT,
-				VkDebugUtilsMessageSeverityFlagsEXT.InfoEXT |
+				//VkDebugUtilsMessageSeverityFlagsEXT.InfoEXT |
 				VkDebugUtilsMessageSeverityFlagsEXT.WarningEXT |
 				VkDebugUtilsMessageSeverityFlagsEXT.ErrorEXT |
 				VkDebugUtilsMessageSeverityFlagsEXT.VerboseEXT);
@@ -90,17 +91,17 @@ namespace vkChess
 
 			cmds = cmdPool.AllocateCommandBuffer (swapChain.ImageCount);
 
-			camera = new Camera (Utils.DegreesToRadians (45f), 1f, 0.1f, 32f);
+			camera = new Camera (Utils.DegreesToRadians (40f), 1f, 0.1f, 32f);
 			camera.SetRotation (0.6f, 0, 0);
-			camera.SetPosition (0, 0f, 12.0f);
+			camera.SetPosition (0, 0f, -12.0f);
 			camera.AspectRatio = Width / Height;
 
-			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [0], camera.NearPlane, camera.FarPlane);
+			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [2], camera.NearPlane, camera.FarPlane);
 			dev.WaitIdle ();
 			renderer.LoadModel (transferQ, modelPathes [0]);
 			camera.Model = Matrix4x4.CreateScale (0.5f);// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
 
-			UpdateFrequency = 8;
+			UpdateFrequency = 5;
 
 			curRenderer = renderer;
 
@@ -181,6 +182,8 @@ namespace vkChess
 		}
 
 		void buildCommandBuffers () {
+			dev.WaitIdle ();
+
 			cmdPool.Reset (); //VkCommandPoolResetFlags.ReleaseResources);
 
 			for (int i = 0; i < swapChain.ImageCount; ++i) {
@@ -197,6 +200,8 @@ namespace vkChess
 		}
 
 		public override void UpdateView () {
+			dev.WaitIdle ();
+
 			renderer.UpdateView (camera);
 			updateViewRequested = false;
 			if (instanceBuff == null)
@@ -210,6 +215,7 @@ namespace vkChess
 		public override void Update () {
 			base.Update ();
 
+			dev.WaitIdle ();
 #if PIPELINE_STATS
 			ulong [] results = statPool.GetResults ();
 			StatResults = new StatResult [statPool.RequestedStats.Length];
@@ -220,6 +226,7 @@ namespace vkChess
 			if (updateInstanceCmds) {
 				updateDrawCmdList ();
 				rebuildBuffers = true;
+				updateInstanceCmds = false;
 			}
 			if (Animation.HasAnimations)
 				renderer.shadowMapRenderer.updateShadowMap = true;
@@ -227,7 +234,7 @@ namespace vkChess
 			animationSteps = 5 + (int)fps / 5;
 
 			Animation.ProcessAnimations ();
-			Piece.FlushHostBuffer ();
+			//Piece.FlushHostBuffer ();
 
 			if (instanceBuff != null && renderer.shadowMapRenderer.updateShadowMap)
 				renderer.shadowMapRenderer.update_shadow_map (cmdPool, instanceBuff, instancedCmds.ToArray ());
@@ -410,6 +417,20 @@ namespace vkChess
 				break;
 			case Glfw.Key.F3:
 				checkBoardIntegrity ();
+				break;
+			case Glfw.Key.F4:
+				foreach (MemoryPool mp in dev.resourceManager.memoryPools) {
+					Resource r = mp.Last;
+					while (r != null) {
+						vke.Image i = r as vke.Image;
+						if (i != null)
+							Console.WriteLine ($"{r.ToString ()} {i.Handle}");
+						r = r.next;
+						if (r == mp.Last)
+							break;
+					}
+
+				}
 				break;
 			case Glfw.Key.S:
 				syncStockfish ();

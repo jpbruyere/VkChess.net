@@ -10,6 +10,12 @@ using vke;
 using Vulkan;
 
 namespace vke {
+	/// <summary>
+	/// Vulkan context with Crow enabled window.
+	/// Crow vector drawing is handled with Cairo Image on an Host mapped vulkan image.
+	/// This is an easy way to have GUI in my samples with low GPU cost. Most of the ui
+	/// is cached on cpu memory images.
+	/// </summary>
 	public class VkCrowWindow : VkWindow, Crow.IBackend, Crow.IValueChange {
 		#region IValueChange implementation
 		public event EventHandler<Crow.ValueChangeEventArgs> ValueChanged;
@@ -28,10 +34,6 @@ namespace vke {
 		public Queue GraphicQueue => presentQueue;
 
 		protected DescriptorSetWrites uiImageUpdate;
-
-		protected VkCrowWindow () : base ()
-		{
-		}
 
 		protected void CreateInterface () {
 			iFace = new Crow.Interface ((int)Width, (int)Height, this);
@@ -86,6 +88,10 @@ namespace vke {
 			uiImage.CreateSampler (VkFilter.Nearest, VkFilter.Nearest, VkSamplerMipmapMode.Nearest, VkSamplerAddressMode.ClampToBorder);
 			uiImage.Descriptor.imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
 			uiImage.Map ();
+
+			CommandBuffer cmd = cmdPool.AllocateAndStart (VkCommandBufferUsageFlags.OneTimeSubmit);
+			uiImage.SetLayout (cmd, VkImageAspectFlags.Color, VkImageLayout.ShaderReadOnlyOptimal);
+			presentQueue.EndSubmitAndWait (cmd, true);
 
 			NotifyValueChanged ("uiImage", uiImage);
 

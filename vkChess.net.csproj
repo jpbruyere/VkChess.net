@@ -1,40 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFrameworks>net472</TargetFrameworks>
-        <EnableDefaultNoneItems>false</EnableDefaultNoneItems>   
-        <OutputPath>$(SolutionDir)build\$(Configuration)\</OutputPath>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net472</TargetFrameworks>
+		<EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+		<OutputPath>$(SolutionDir)build\$(Configuration)\</OutputPath>
 		<IntermediateOutputPath>$(SolutionDir)build\obj\$(Configuration)\</IntermediateOutputPath>
-    </PropertyGroup>
-    
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">          
-        <DebugType>full</DebugType>
-        <DefineConstants>TRACE;DEBUG;_PIPELINE_STATS</DefineConstants>
-        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    </PropertyGroup>
-    
-    <ItemGroup>    
-        <GLSLShader Include="shaders\**\*.frag;shaders\**\*.vert;shaders\**\*.comp;shaders\**\*.geom" />
-        <None Include="data\**\*.*;ui\**\*.*">      
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>        
-		<EmbeddedResource Include="ui\*.style" />		
-    </ItemGroup>    
-    
-    <ItemGroup>
-		<PackageReference Include="SpirVTasks" Version="0.1.15-beta" />        
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+		<DefineConstants>TRACE;_PIPELINE_STATS;DEBUG;NETFRAMEWORK;NET472</DefineConstants>
+		<CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	</PropertyGroup>
+	<ItemGroup>
+		<GLSLShader Include="shaders\**\*.frag;shaders\**\*.vert;shaders\**\*.comp;shaders\**\*.geom" />
+		<None Include="data\**\*.*;ui\**\*.*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<EmbeddedResource Include="ui\*.style" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="SpirVTasks" Version="0.1.41-beta" />
 		<PackageReference Include="Crow" Version="0.8.5-beta" />
-        <PackageReference Include="vke" Version="0.1.9-beta" />
-        <PackageReference Include="vke.gltfLoader" Version="0.1.7-beta" />
-        <PackageReference Include="vke.EnvironmentPipeline" Version="0.1.0-beta" />
+		<PackageReference Include="vke" Version="0.1.13-beta" />
+		<PackageReference Include="vke.gltfLoader" Version="0.1.13" />
+		<PackageReference Include="vke.EnvironmentPipeline" Version="0.1.13-beta" />
 		<!--<ProjectReference Include="..\..\Crow\Crow\Crow.csproj" />-->
-    </ItemGroup>
-	
-    <ItemGroup>
-      <Compile Remove="DebuDrawPipeline.cs;CrowWin.cs;build\**\*.cs" />      
-    </ItemGroup>
+	</ItemGroup>
+	<ItemGroup>
+		<Compile Remove="DebuDrawPipeline.cs;CrowWin.cs;build\**\*.cs" />
+	</ItemGroup>
 </Project>

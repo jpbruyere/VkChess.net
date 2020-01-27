@@ -148,7 +148,7 @@ namespace vkChess
             renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
             renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
             renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
-            renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
+            renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.5f, 0.0f, 0.0f) });
 
             SubPass[] subpasses = { new SubPass (), new SubPass (), new SubPass (), new SubPass (), new SubPass () };
             //skybox
@@ -163,7 +163,7 @@ namespace vkChess
                                     new VkAttachmentReference (4, VkImageLayout.ColorAttachmentOptimal),
                                     new VkAttachmentReference (5, VkImageLayout.ColorAttachmentOptimal));
             subpasses[SP_MODELS].SetDepthReference (1, VkImageLayout.DepthStencilAttachmentOptimal);
-            subpasses[SP_MODELS].AddPreservedReference (0);
+            subpasses[SP_MODELS].AddPreservedReference (6);
 
             //compose
             subpasses[SP_COMPOSE].AddColorReference (6, VkImageLayout.ColorAttachmentOptimal);
@@ -183,7 +183,7 @@ namespace vkChess
                 VkPipelineStageFlags.BottomOfPipe, VkPipelineStageFlags.ColorAttachmentOutput,
                 VkAccessFlags.MemoryRead, VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite);
 			renderPass.AddDependency (SP_SKYBOX, SP_DEPTH_PREPASS,
-				VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.EarlyFragmentTests,
+				VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.FragmentShader,
 				VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.ShaderRead);
 			renderPass.AddDependency (SP_DEPTH_PREPASS, SP_MODELS,
 				VkPipelineStageFlags.EarlyFragmentTests, VkPipelineStageFlags.FragmentShader,
@@ -234,8 +234,7 @@ namespace vkChess
 					new VkPushConstantRange (VkShaderStageFlags.Fragment, sizeof (int), 64)},
 				descLayoutMain, descLayoutGBuff);
 
-			cfg.RenderPass = renderPass;
-            cfg.SubpassIndex = SP_MODELS;
+			cfg.RenderPass = renderPass;            
             //cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
 
             cfg.AddVertexBinding<PbrModelTexArray.Vertex> (0);
@@ -292,7 +291,7 @@ namespace vkChess
             dsMain = descriptorPool.Allocate (descLayoutMain);
             dsGBuff = descriptorPool.Allocate (descLayoutGBuff);
 
-            envCube = new vke.Environment.EnvironmentCube (cubemapPath, dsMain, gBuffPipeline.Layout, presentQueue, renderPass);
+			envCube = new vke.Environment.EnvironmentCube (cubemapPath, gBuffPipeline.Layout, presentQueue, renderPass);
 
             matrices.prefilteredCubeMipLevels = envCube.prefilterCube.CreateInfo.mipLevels;
 
@@ -383,14 +382,10 @@ namespace vkChess
             matrices.view = camera.View;
             matrices.model = camera.Model;
 
-            matrices.camPos = new Vector4 (
-                -camera.Position.Z * (float)Math.Sin (camera.Rotation.Y) * (float)Math.Cos (camera.Rotation.X),
-                 camera.Position.Z * (float)Math.Sin (camera.Rotation.X),
-                 camera.Position.Z * (float)Math.Cos (camera.Rotation.Y) * (float)Math.Cos (camera.Rotation.X),
-                 0
-            );
+			Matrix4x4.Invert (camera.View, out Matrix4x4 inv);
+			matrices.camPos = new Vector4 (inv.M41, inv.M42, inv.M43, 0);
 
-            uboMatrices.Update (matrices, (uint)Marshal.SizeOf<Matrices> ());
+			uboMatrices.Update (matrices, (uint)Marshal.SizeOf<Matrices> ());
 			shadowMapRenderer.updateShadowMap = true;
 		}
 
