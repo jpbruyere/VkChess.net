@@ -40,11 +40,11 @@ namespace vkChess
 		VkChess(){}
 		static void Main (string [] args) {
 			Instance.VALIDATION = true;
-			//Instance.RENDER_DOC_CAPTURE = true;
+			Instance.RENDER_DOC_CAPTURE = false;
 			//SwapChain.PREFERED_FORMAT = VkFormat.B8g8r8a8Unorm;
-			DeferredPbrRenderer.MAX_MATERIAL_COUNT = 5;
-			DeferredPbrRenderer.MRT_FORMAT = VkFormat.R16g16b16a16Sfloat;
-			DeferredPbrRenderer.HDR_FORMAT = VkFormat.R16g16b16a16Sfloat;
+			DeferredPbrRendererBase.MAX_MATERIAL_COUNT = 5;
+			DeferredPbrRendererBase.MRT_FORMAT = VkFormat.R16g16b16a16Sfloat;
+			DeferredPbrRendererBase.HDR_FORMAT = VkFormat.R16g16b16a16Sfloat;
 			PbrModelTexArray.TEXTURE_DIM = 512;
 			ShadowMapRenderer.SHADOWMAP_SIZE = 1024;
 
@@ -53,12 +53,13 @@ namespace vkChess
 		}
 		public override string [] EnabledInstanceExtensions => new string [] {
 #if DEBUG
-			Ext.I.VK_EXT_debug_utils,
+			//Ext.I.VK_EXT_debug_utils,
 #endif
 		};
 
 		public override string [] EnabledDeviceExtensions => new string [] {
 			Ext.D.VK_KHR_swapchain,
+			Ext.D.VK_KHR_multiview
 		};
 		protected override void configureEnabledFeatures (VkPhysicalDeviceFeatures available_features, ref VkPhysicalDeviceFeatures enabled_features) {
 			base.configureEnabledFeatures (available_features, ref enabled_features);
@@ -82,19 +83,77 @@ namespace vkChess
 		public StatResult [] StatResults;
 #endif
 #if DEBUG
-		vke.DebugUtils.Messenger dbgmsg;
+		//vke.DebugUtils.Messenger dbgmsg;
 #endif
+		protected override void CreateRenderPass () {
+			renderPass = new RenderPass (dev, swapChain.ColorFormat, DeferredPbrRendererBase.NUM_SAMPLES);			
+			/*renderPass = new RenderPass (dev, VkSampleCountFlags.SampleCount1);
+			renderPass.AddAttachment (swapChain.ColorFormat, VkImageLayout.PresentSrcKHR, VkSampleCountFlags.SampleCount1,
+				VkAttachmentLoadOp.Load, VkAttachmentStoreOp.DontCare, VkImageLayout.ColorAttachmentOptimal);//final outpout
+			SubPass subpass0 = new SubPass ();
+			subpass0.AddColorReference (0, VkImageLayout.ColorAttachmentOptimal);
+			renderPass.AddSubpass (subpass0);
+			renderPass.AddDependency (Vk.SubpassExternal, 0,
+				VkPipelineStageFlags.BottomOfPipe, VkPipelineStageFlags.ColorAttachmentOutput,
+				VkAccessFlags.MemoryRead, VkAccessFlags.ColorAttachmentWrite);
+			renderPass.AddDependency (0, Vk.SubpassExternal,
+				VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.BottomOfPipe,
+				VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.MemoryRead);*/
+		}		
+		GraphicPipeline plToneMap;
+		DescriptorSetLayout dslToneMap;
+		protected override void CreateDescriptors () {
+			dsPool = new DescriptorPool (dev, 1,
+				new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 2));
+			descSet = dsPool.Allocate (dslToneMap);			
+		}
+		protected override void CreatePipeline () {
+			using (GraphicPipelineConfig cfg = GraphicPipelineConfig.CreateDefault (VkPrimitiveTopology.TriangleList, DeferredPbrRendererBase.NUM_SAMPLES)) {			
+				if (DeferredPbrRendererBase.NUM_SAMPLES != VkSampleCountFlags.SampleCount1) {
+					cfg.multisampleState.sampleShadingEnable = true;
+					cfg.multisampleState.minSampleShading = 0.5f;
+				}
+				dslToneMap = new DescriptorSetLayout (dev, 0,
+					new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
+					new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler)
+				);
+				cfg.Layout = new PipelineLayout (dev,
+					new VkPushConstantRange (VkShaderStageFlags.Fragment, 2 * sizeof (float)), dslToneMap);
+
+				cfg.RenderPass = renderPass;
+				cfg.AddShaders (
+					new ShaderInfo (dev, VkShaderStageFlags.Vertex, "#vke.FullScreenQuad.vert.spv"),
+					new ShaderInfo (dev, VkShaderStageFlags.Fragment, "#vkChess.net.tone_mapping2.frag.spv")
+				);
+
+				plToneMap = new GraphicPipeline (cfg);
+
+			}
+		}
+		protected override void recordUICmd (PrimaryCommandBuffer cmd, int imageIndex) {			
+			renderPass.Begin(cmd, frameBuffers[imageIndex]);
+
+			cmd.SetViewport (frameBuffers[imageIndex].Width, frameBuffers[imageIndex].Height);
+			cmd.SetScissor (frameBuffers[imageIndex].Width, frameBuffers[imageIndex].Height);
+
+			cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 8, new float[] { Exposure, Gamma }, 0);
+			plToneMap.BindDescriptorSet (cmd, descSet);
+			plToneMap.Bind (cmd);
+			cmd.Draw (3, 1, 0, 0);
+
+			renderPass.End (cmd);
+		}		
 		protected override void initVulkan () {
 			initLog ();
 
 			base.initVulkan ();
 
 #if DEBUG
-			dbgmsg = new vke.DebugUtils.Messenger (instance, VkDebugUtilsMessageTypeFlagsEXT.PerformanceEXT | VkDebugUtilsMessageTypeFlagsEXT.ValidationEXT | VkDebugUtilsMessageTypeFlagsEXT.GeneralEXT,
-				//VkDebugUtilsMessageSeverityFlagsEXT.InfoEXT |
+			/*dbgmsg = new vke.DebugUtils.Messenger (instance, VkDebugUtilsMessageTypeFlagsEXT.PerformanceEXT | VkDebugUtilsMessageTypeFlagsEXT.ValidationEXT | VkDebugUtilsMessageTypeFlagsEXT.GeneralEXT,
+				VkDebugUtilsMessageSeverityFlagsEXT.InfoEXT |
 				VkDebugUtilsMessageSeverityFlagsEXT.WarningEXT |
 				VkDebugUtilsMessageSeverityFlagsEXT.ErrorEXT |
-				VkDebugUtilsMessageSeverityFlagsEXT.VerboseEXT);
+				VkDebugUtilsMessageSeverityFlagsEXT.VerboseEXT);*/
 #endif
 #if PIPELINE_STATS
 			statPool = new PipelineStatisticsQueryPool (dev,
@@ -115,7 +174,7 @@ namespace vkChess
 			camera.SetPosition (0, 0f, -12.0f);
 			camera.AspectRatio = Width / Height;
 
-			DeferredPbrRenderer.NUM_SAMPLES =  SampleCount;
+			DeferredPbrRendererBase.NUM_SAMPLES =  SampleCount;
 
 			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [0], camera.NearPlane, camera.FarPlane);
 
@@ -124,7 +183,7 @@ namespace vkChess
 			renderer.matrices.scaleIBLAmbient = IBLAmbient;
 			renderer.lights[0].color = new Vector4 (LightStrength);
 			//renderer.LoadModel (transferQ, "data/models/chess.glb");
-			renderer.LoadModel (transferQ, "/mnt/devel/vkChess.net/data/models/chess.glb");
+			renderer.LoadModel (transferQ, "/mnt/devel/vkChess.net/data/models/chess2.glb");
 			camera.Model = Matrix4x4.CreateScale (0.5f);// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
 
 			UpdateFrequency = 5;
@@ -151,7 +210,7 @@ namespace vkChess
 			"data/textures/gcanyon_cube.ktx",
 		};
 
-		DeferredPbrRenderer renderer;
+		DeferredPbrRendererBase renderer;
 		
 		public struct InstanceData
 		{
@@ -167,9 +226,9 @@ namespace vkChess
 		public HostBuffer<InstanceData> instanceBuff;
 		Model.InstancedCmd [] instancedCmds;
 
-		public static DeferredPbrRenderer curRenderer;
+		public static DeferredPbrRendererBase curRenderer;
 		bool rebuildBuffers = false;
-		public virtual DeferredPbrRenderer.DebugView CurrentDebugView {
+		public virtual DeferredPbrRendererBase.DebugView CurrentDebugView {
 			get => renderer.currentDebugView;
 			set {
 				if (value == renderer.currentDebugView)
@@ -267,6 +326,10 @@ namespace vkChess
 		protected override void OnResize () {
 			base.OnResize ();
 			renderer.Resize ();
+
+			DescriptorSetWrites dsw = new DescriptorSetWrites (descSet, dslToneMap.Bindings[1]);
+			dsw.Write (dev, renderer.HDROutput.Descriptor);
+
 			buildCommandBuffers ();
 			updateViewRequested = true;
 		}
@@ -275,12 +338,13 @@ namespace vkChess
 		protected override void Dispose (bool disposing) {
 			if (disposing) {
 				if (!isDisposed) {
+					plToneMap.Dispose();
 					renderer.Dispose ();
 					instanceBuff.Dispose ();
 				}
 			}
 #if DEBUG
-			dbgmsg.Dispose ();
+			//dbgmsg.Dispose ();
 #endif
 #if PIPELINE_STATS
 			timestampQPool?.Dispose ();
@@ -632,7 +696,7 @@ namespace vkChess
 				Configuration.Global.Set ("Gamma", value);
 				renderer.matrices.gamma = value;
 				NotifyValueChanged ("Gamma", value);
-				updateViewRequested = true;
+				rebuildBuffers = true;
 			}
 		}
 		public float Exposure {
@@ -643,7 +707,7 @@ namespace vkChess
 				Configuration.Global.Set ("Exposure", value);
 				renderer.matrices.exposure = value;
 				NotifyValueChanged ("Exposure", value);
-				updateViewRequested = true;
+				rebuildBuffers = true;
 			}
 		}
 		public float IBLAmbient {
@@ -674,7 +738,7 @@ namespace vkChess
 				if (value == SampleCount)
 					return;
 				Configuration.Global.Set ("SampleCount", value);
-				DeferredPbrRenderer.NUM_SAMPLES = value;
+				DeferredPbrRendererBase.NUM_SAMPLES = value;
 				NotifyValueChanged ("SampleCount", value);
 			}
 		}

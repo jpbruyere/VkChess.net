@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using vke;
 using vke.glTF;
 using Vulkan;
-using static vkChess.DeferredPbrRenderer;
+using static vkChess.DeferredPbrRendererBase;
 
 namespace vkChess {
 	public class ShadowMapRenderer : IDisposable {
@@ -33,9 +33,9 @@ namespace vkChess {
 		DescriptorPool descriptorPool;
 		DescriptorSetLayout descLayoutShadow;
 		DescriptorSet dsShadow;
-		DeferredPbrRenderer renderer;
+		DeferredPbrRendererBase renderer;
 
-		public ShadowMapRenderer (Device dev, DeferredPbrRenderer renderer, float farPlane = 16f) {
+		public ShadowMapRenderer (Device dev, DeferredPbrRendererBase renderer, float farPlane = 16f) {
 			this.lightFarPlane = farPlane;
 			this.dev = dev;
 			this.renderer = renderer;

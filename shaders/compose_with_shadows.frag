@@ -151,7 +151,7 @@ float textureProj(vec4 P, float layer, vec2 offset)
         if (shadowCoord.w > 0.0 && dist < shadowCoord.z)         
             shadow = SHADOW_FACTOR;
     }else
-        shadow = 0.05f;//for debug view out of light proj
+        shadow = 0.0f;//for debug view out of light proj
     
     return shadow;
 }
@@ -258,7 +258,7 @@ void main()
         vec3 color = NdotL * lights[i].color.rgb * (diffuseContrib + specContrib);
 
         // Calculate lighting contribution from image based lighting source (IBL)
-        colors += shadowFactor * (color + getIBLContribution(pbrInputs, n, reflection));        
+        colors += shadowFactor * (color + getIBLContribution(pbrInputs, n, reflection));
         
     }
     colors /= NUM_LIGHTS;
