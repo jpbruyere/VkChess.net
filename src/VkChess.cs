@@ -42,12 +42,11 @@ namespace vkChess
 			Instance.VALIDATION = true;
 			Instance.RENDER_DOC_CAPTURE = false;
 			//SwapChain.PREFERED_FORMAT = VkFormat.B8g8r8a8Unorm;
-			DeferredPbrRendererBase.MAX_MATERIAL_COUNT = 5;
+			DeferredPbrRendererBase.MAX_MATERIAL_COUNT = 3;
 			DeferredPbrRendererBase.MRT_FORMAT = VkFormat.R16g16b16a16Sfloat;
 			DeferredPbrRendererBase.HDR_FORMAT = VkFormat.R16g16b16a16Sfloat;
 			PbrModelTexArray.TEXTURE_DIM = 512;
-			ShadowMapRenderer.SHADOWMAP_SIZE = 1024;
-
+			ShadowMapRenderer.SHADOWMAP_SIZE = 1024;			
 			using (VkChess app = new VkChess ())
 				app.Run ();
 		}
@@ -104,8 +103,9 @@ namespace vkChess
 		DescriptorSetLayout dslToneMap;
 		protected override void CreateDescriptors () {
 			dsPool = new DescriptorPool (dev, 1,
-				new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 2));
-			descSet = dsPool.Allocate (dslToneMap);			
+				new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 4),
+				new VkDescriptorPoolSize (VkDescriptorType.UniformBuffer, 1));
+			descSet = dsPool.Allocate (dslToneMap);
 		}
 		protected override void CreatePipeline () {
 			using (GraphicPipelineConfig cfg = GraphicPipelineConfig.CreateDefault (VkPrimitiveTopology.TriangleList, DeferredPbrRendererBase.NUM_SAMPLES)) {			
@@ -115,10 +115,13 @@ namespace vkChess
 				}
 				dslToneMap = new DescriptorSetLayout (dev, 0,
 					new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-					new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler)
+					new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
+					new VkDescriptorSetLayoutBinding (2, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
+					new VkDescriptorSetLayoutBinding (3, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
+					new VkDescriptorSetLayoutBinding (4, VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer)
 				);
 				cfg.Layout = new PipelineLayout (dev,
-					new VkPushConstantRange (VkShaderStageFlags.Fragment, 2 * sizeof (float)), dslToneMap);
+					new VkPushConstantRange (VkShaderStageFlags.Fragment, 20u), dslToneMap);
 
 				cfg.RenderPass = renderPass;
 				cfg.AddShaders (
@@ -136,7 +139,8 @@ namespace vkChess
 			cmd.SetViewport (frameBuffers[imageIndex].Width, frameBuffers[imageIndex].Height);
 			cmd.SetScissor (frameBuffers[imageIndex].Width, frameBuffers[imageIndex].Height);
 
-			cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 8, new float[] { Exposure, Gamma }, 0);
+			cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 16, new float[] { Exposure, Gamma, SSRStep, SSRThreshold }, 0);
+			cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 4, SSRMaxStepCount, 16);
 			plToneMap.BindDescriptorSet (cmd, descSet);
 			plToneMap.Bind (cmd);
 			cmd.Draw (3, 1, 0, 0);
@@ -176,15 +180,18 @@ namespace vkChess
 
 			DeferredPbrRendererBase.NUM_SAMPLES =  SampleCount;
 
-			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [0], camera.NearPlane, camera.FarPlane);
+			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [1], camera.NearPlane, camera.FarPlane);
 
-			renderer.matrices.gamma = Gamma;
-			renderer.matrices.exposure = Exposure;
 			renderer.matrices.scaleIBLAmbient = IBLAmbient;
 			renderer.lights[0].color = new Vector4 (LightStrength);
 			//renderer.LoadModel (transferQ, "data/models/chess.glb");
 			renderer.LoadModel (transferQ, "/mnt/devel/vkChess.net/data/models/chess2.glb");
 			camera.Model = Matrix4x4.CreateScale (0.5f);// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
+
+			DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,
+				dslToneMap.Bindings[4]);
+			dsw.Write (dev, renderer.uboMatrices.Descriptor);
+
 
 			UpdateFrequency = 5;
 
@@ -327,8 +334,9 @@ namespace vkChess
 			base.OnResize ();
 			renderer.Resize ();
 
-			DescriptorSetWrites dsw = new DescriptorSetWrites (descSet, dslToneMap.Bindings[1]);
-			dsw.Write (dev, renderer.HDROutput.Descriptor);
+			DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,
+				dslToneMap.Bindings[1], dslToneMap.Bindings[2], dslToneMap.Bindings[3]);
+			dsw.Write (dev, renderer.HDROutput.Descriptor, renderer.GBuffPosDepthOutput.Descriptor, renderer.GBuffN_AO.Descriptor);
 
 			buildCommandBuffers ();
 			updateViewRequested = true;
@@ -493,7 +501,7 @@ namespace vkChess
 		protected override void onKeyDown (Glfw.Key key, int scanCode, Modifier modifiers) {
 			switch (key) {
 			case Glfw.Key.F1:
-				loadWindow (@"ui/main.crow", this);
+				loadWindow (@"ui/winSSR.crow", this);
 				break;
 			case Glfw.Key.F2:
 				/*loadWindow (@"ui/board.crow", this);
@@ -694,7 +702,6 @@ namespace vkChess
 				if (value == Gamma)
 					return;
 				Configuration.Global.Set ("Gamma", value);
-				renderer.matrices.gamma = value;
 				NotifyValueChanged ("Gamma", value);
 				rebuildBuffers = true;
 			}
@@ -705,7 +712,6 @@ namespace vkChess
 				if (value == Exposure)
 					return;
 				Configuration.Global.Set ("Exposure", value);
-				renderer.matrices.exposure = value;
 				NotifyValueChanged ("Exposure", value);
 				rebuildBuffers = true;
 			}
@@ -740,6 +746,36 @@ namespace vkChess
 				Configuration.Global.Set ("SampleCount", value);
 				DeferredPbrRendererBase.NUM_SAMPLES = value;
 				NotifyValueChanged ("SampleCount", value);
+			}
+		}
+		public float SSRStep {
+			get => Configuration.Global.Get<float> ("SSRStep", 0.1f);
+			set {
+				if (value == SSRStep)
+					return;
+				Configuration.Global.Set ("SSRStep", value);
+				NotifyValueChanged ("SSRStep", value);
+				rebuildBuffers = true;
+			}
+		}
+		public float SSRThreshold {
+			get => Configuration.Global.Get<float> ("SSRThreshold", 0.05f);
+			set {
+				if (value == SSRThreshold)
+					return;
+				Configuration.Global.Set ("SSRThreshold", value);
+				NotifyValueChanged ("SSRThreshold", value);
+				rebuildBuffers = true;
+			}
+		}
+		public int SSRMaxStepCount {
+			get => Configuration.Global.Get<int> ("SSRMaxStepCount", 100);
+			set {
+				if (value == SSRMaxStepCount)
+					return;
+				Configuration.Global.Set ("SSRMaxStepCount", value);
+				NotifyValueChanged ("SSRMaxStepCount", value);
+				rebuildBuffers = true;
 			}
 		}
 		#endregion

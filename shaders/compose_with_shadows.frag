@@ -7,8 +7,6 @@ layout (set = 0, binding = 0) uniform UBO {
     mat4 model;
     mat4 view;
     vec4 camPos;    
-    float exposure;
-    float gamma;
     float prefilteredCubeMipLevels;
     float scaleIBLAmbient;
 } ubo;
@@ -77,7 +75,6 @@ vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
     vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;
     vec3 specular = specularLight * (pbrInputs.specularColor * brdf.x + brdf.y);
 
-    // For presentation, this allows us to disable IBL terms
     // For presentation, this allows us to disable IBL terms
     diffuse *= ubo.scaleIBLAmbient;
     specular *= ubo.scaleIBLAmbient;
@@ -271,5 +268,5 @@ void main()
     colors = mix(colors, colors * subpassLoad(samplerN_AO, gl_SampleID).a, u_OcclusionStrength);
     colors += emissive;             
     
-    outColor = vec4(colors, baseColor.a);       
+    outColor = vec4(colors, 0);//baseColor.a);       
 }

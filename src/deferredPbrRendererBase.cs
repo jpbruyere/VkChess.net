@@ -42,8 +42,6 @@ namespace vkChess
 			public Matrix4x4 model;
 			public Matrix4x4 view;
 			public Vector4 camPos;
-			public float exposure;
-			public float gamma;
 			public float prefilteredCubeMipLevels;
 			public float scaleIBLAmbient;
 		}
@@ -54,9 +52,7 @@ namespace vkChess
 		}
 
 		public Matrices matrices = new Matrices {
-			gamma = 1.2f,
-			exposure = 2.0f,
-			scaleIBLAmbient = 0.5f,
+			scaleIBLAmbient = 0.5f
 		};
 		//public Light[] lights = {
 		//    new Light {
@@ -87,6 +83,8 @@ namespace vkChess
 		Image gbColorRough, gbEmitMetal, gbN_AO, gbPos, hdrImg;
 
 		public Image HDROutput => hdrImg;
+		public Image GBuffPosDepthOutput => gbPos;
+		public Image GBuffN_AO => gbN_AO;
 
 		DescriptorPool descriptorPool;
 		DescriptorSetLayout descLayoutMain, descLayoutGBuff;
@@ -152,8 +150,8 @@ namespace vkChess
 			renderPass.AddAttachment (dev.GetSuitableDepthFormat (), VkImageLayout.DepthStencilAttachmentOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.DontCare);
 			renderPass.AddAttachment (swapChain.ColorFormat, VkImageLayout.ColorAttachmentOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.DontCare);//GBuff0 (color + roughness) and final color before resolve
 			renderPass.AddAttachment (VkFormat.R8g8b8a8Unorm, VkImageLayout.ColorAttachmentOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.DontCare);//GBuff1 (emit + metal)
-			renderPass.AddAttachment (MRT_FORMAT, VkImageLayout.ColorAttachmentOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.DontCare);//GBuff2 (normals + AO)
-			renderPass.AddAttachment (MRT_FORMAT, VkImageLayout.ColorAttachmentOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.DontCare);//GBuff3 (Pos + depth)			
+			renderPass.AddAttachment (MRT_FORMAT, VkImageLayout.ShaderReadOnlyOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.Store, VkImageLayout.ShaderReadOnlyOptimal);//GBuff2 (normals + AO)
+			renderPass.AddAttachment (MRT_FORMAT, VkImageLayout.ShaderReadOnlyOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.Store, VkImageLayout.ShaderReadOnlyOptimal);//GBuff3 (Pos + depth)			
 
 			renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
 			renderPass.ClearValues.Add (new VkClearValue { depthStencil = new VkClearDepthStencilValue (1.0f, 0) });
@@ -425,8 +423,8 @@ namespace vkChess
 
 			gbColorRough = new Image (dev, swapChain.ColorFormat, VkImageUsageFlags.InputAttachment | VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransientAttachment, VkMemoryPropertyFlags.DeviceLocal, swapChain.Width, swapChain.Height, VkImageType.Image2D, NUM_SAMPLES, VkImageTiling.Optimal, 1, layerCount);
 			gbEmitMetal = new Image (dev, VkFormat.R8g8b8a8Unorm, VkImageUsageFlags.InputAttachment | VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransientAttachment, VkMemoryPropertyFlags.DeviceLocal, swapChain.Width, swapChain.Height, VkImageType.Image2D, NUM_SAMPLES, VkImageTiling.Optimal, 1, layerCount);
-			gbN_AO = new Image (dev, MRT_FORMAT, VkImageUsageFlags.InputAttachment | VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransientAttachment, VkMemoryPropertyFlags.DeviceLocal, swapChain.Width, swapChain.Height, VkImageType.Image2D, NUM_SAMPLES, VkImageTiling.Optimal, 1, layerCount);
-			gbPos = new Image (dev, MRT_FORMAT, VkImageUsageFlags.InputAttachment | VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransientAttachment, VkMemoryPropertyFlags.DeviceLocal, swapChain.Width, swapChain.Height, VkImageType.Image2D, NUM_SAMPLES, VkImageTiling.Optimal, 1, layerCount);
+			gbN_AO = new Image (dev, MRT_FORMAT, VkImageUsageFlags.InputAttachment | VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransientAttachment | VkImageUsageFlags.Sampled, VkMemoryPropertyFlags.DeviceLocal, swapChain.Width, swapChain.Height, VkImageType.Image2D, NUM_SAMPLES, VkImageTiling.Optimal, 1, layerCount);
+			gbPos = new Image (dev, MRT_FORMAT, VkImageUsageFlags.InputAttachment | VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransientAttachment | VkImageUsageFlags.Sampled, VkMemoryPropertyFlags.DeviceLocal, swapChain.Width, swapChain.Height, VkImageType.Image2D, NUM_SAMPLES, VkImageTiling.Optimal, 1, layerCount);
 			hdrImg = new Image (dev, HDR_FORMAT, VkImageUsageFlags.InputAttachment | VkImageUsageFlags.ColorAttachment | VkImageUsageFlags.TransientAttachment | VkImageUsageFlags.Sampled, VkMemoryPropertyFlags.DeviceLocal | VkMemoryPropertyFlags.DeviceLocal, swapChain.Width, swapChain.Height, VkImageType.Image2D, NUM_SAMPLES, VkImageTiling.Optimal, 1, 1);
 
 			gbColorRough.CreateView ();

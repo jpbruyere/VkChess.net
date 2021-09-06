@@ -7,8 +7,6 @@ layout (set = 0, binding = 0) uniform UBO {
     mat4 model;
     mat4 view;
     vec4 camPos;    
-    float exposure;
-    float gamma;
     float prefilteredCubeMipLevels;
     float scaleIBLAmbient;
 } ubo;
