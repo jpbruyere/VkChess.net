@@ -14,7 +14,7 @@ using System.Reflection;
 namespace vkChess
 {
 	public enum GameState { Init, SceneInitialized, StockFishStarted, Play, Pad, Checked, Checkmate };
-	public enum PlayerType { Human, AI };
+	//public enum PlayerType { Human, AI };
 	public enum ChessColor { White, Black };
 	public enum PieceType { Pawn, Rook, Knight, Bishop, King, Queen };
 
@@ -531,10 +531,6 @@ namespace vkChess
 				else
 					saveCurrentGame ();
 				break;
-			case Glfw.Key.S:
-				syncStockfish ();
-				sendToStockfish ("go");
-				break;
 			case Glfw.Key.Keypad0:
 				whites [0].X = 0;
 				whites [0].Y = 0;
@@ -657,8 +653,10 @@ namespace vkChess
 			if (CurrentState < GameState.Play)
 				return;
 			if (!playerIsAi(CurrentPlayer) && enableHint) {
-				searchStopRequested = true;
-				sendToStockfish ("stop");
+				lock (movesMutex) {
+					searchStopRequested = true;
+					sendToStockfish ("stop");
+				}
 				while (searchStopRequested)
                     System.Threading.Thread.Sleep (10);
 			}
@@ -667,19 +665,20 @@ namespace vkChess
 			get => CameraRotation.Y;
 			set => CameraRotation = new Vector3(CameraRotation.X, value, CameraRotation.Z);
 		}
-		void rotateBoard (float targetYAngle) {
-			
-		}
 		void onNewWhiteGame (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/newGame.crow");
+			if (CurrentState < GameState.Play)
+				return;			
 			Log(LogType.Custom1, "New White Game");
 
 			terminateCurrentGame();
 
-			CurrentState = GameState.Play;
+			CurrentState = GameState.StockFishStarted;
 
 			WhitesAreAI = false;
 			BlacksAreAI = true;
+
+			CurrentState = GameState.Play;
 
 			resetBoard ();
 			syncStockfish ();
@@ -687,18 +686,22 @@ namespace vkChess
 			if (enableHint)
 				sendToStockfish ("go infinite");
 
-			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", 0, 0.05f));			
+			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", 0, 0.15f));
 		}
 		void onNewBlackGame (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/newGame.crow");
+			if (CurrentState < GameState.Play)
+				return;			
 			Log(LogType.Custom1, "New Black Game");
 
 			terminateCurrentGame();
 
-			CurrentState = GameState.Play;
+			CurrentState = GameState.StockFishStarted;
 
 			WhitesAreAI = true;
 			BlacksAreAI = false;
+
+			CurrentState = GameState.Play;
 
 			resetBoard ();
 			syncStockfish ();
@@ -708,7 +711,7 @@ namespace vkChess
 			else
 				sendToStockfish ("go depth 1");
 			
-			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", MathHelper.Pi, 0.05f));			
+			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", MathHelper.Pi, 0.15f));			
 		}
 		void onPromoteToQueenClick (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/promote.crow");
@@ -874,7 +877,7 @@ namespace vkChess
 			}
 		}*/				
 		public Vector3 CameraRotation {
-			get => ExtensionMethods.ParseVec3 (Configuration.Global.Get<string> ("CameraRotation", "<0.6f,0,0>"));
+			get => ExtensionMethods.ParseVec3 (Configuration.Global.Get<string> ("CameraRotation", "<0.6,0,0>"));
 			set {
 				if (value == CameraRotation)
 					return;
@@ -1017,8 +1020,15 @@ namespace vkChess
 				if (value == WhitesAreAI)
 					return;
 
+				if (CurrentState >= GameState.Play)
+					terminateCurrentGame ();
+
 				Configuration.Global.Set ("WhitesAreAI", value);
 				NotifyValueChanged ("WhitesAreAI", value);
+
+				if (CurrentState >= GameState.Play)
+					startTurn ();
+			
 			}
 		}
 		public bool BlacksAreAI {
@@ -1026,9 +1036,16 @@ namespace vkChess
 			set {
 				if (value == BlacksAreAI)
 					return;
+			
+				if (CurrentState >= GameState.Play)
+					terminateCurrentGame ();
 
 				Configuration.Global.Set ("BlacksAreAI", value);
 				NotifyValueChanged ("BlacksAreAI", value);
+
+				if (CurrentState >= GameState.Play)
+					startTurn ();
+			
 			}
 		}
 		string stockfishPositionCommand

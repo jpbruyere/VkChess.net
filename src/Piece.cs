@@ -169,15 +169,12 @@ namespace vkChess {
 
 		public void Reset(bool animate = true) {
 			xAngle = 0f;
-			Z = 0f;
 			if (HasMoved) {
 				if (animate)
 					Animation.StartAnimation(new PathAnimation(this, "Position",
 						new BezierPath(
 							Position,
 							new Vector3(initX, initY, 0f), Vector3.UnitZ)));
-				//else
-				//    Position = new Vector3(initX, initY, 0f);
 			}
 			if (IsPromoted)
 				Unpromote();
@@ -189,11 +186,11 @@ namespace vkChess {
 			BoardCell = newPos;
 			if (animate) {
 				if (Captured)
-                    Animation.StartAnimation (new PathAnimation (this, "Position",
-                        new BezierPath (
-                        Position,
-                        capturePos, Vector3.UnitZ), VkChess.animationSteps),
-                        0);
+					Animation.StartAnimation (new PathAnimation (this, "Position",
+						new BezierPath (
+						Position,
+						capturePos, Vector3.UnitZ), VkChess.animationSteps),
+						0);
 				else if (BoardCell.X != Position.X || BoardCell.Y != Position.Y)
 					Animation.StartAnimation (new PathAnimation (this, "Position",
 						new BezierPath (

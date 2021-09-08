@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0"?>
-<Button Command="{}" Width="Stretched">
+<Button Command="{}" Width="Stretched" Height="Stretched">
 	<Template>
 		<Container Width="Stretched" Height="Stretched" Margin="6"
 						MouseEnter="{Background=${ControlHighlight}}"

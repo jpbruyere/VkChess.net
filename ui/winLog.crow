@@ -1,8 +1,24 @@
 ﻿<?xml version="1.0"?>
 <Window Caption="Log" Width="Stretched" Height="40%" VerticalAlignment="Top" >
+	<Template>
+		<Border Name="SizeHandle" Style="winBorder" CornerRadius="{./CornerRadius}" Background="{./Background}" >
+			<Group>
+				<Group Margin="2" Height="Fit" VerticalAlignment="Top">
+					<Label Font="serif, 18" Name="MoveHandle" Width="90%" Foreground="${WindowTitleBarForeground" Margin="1" TextAlignment="Center" Text="{./Caption}" />
+					<ListBox Data="{./Commands}" Fit="true" HorizontalAlignment="Right" VerticalAlignment="Top">
+						<Template>
+							<HorizontalStack Name="ItemsContainer" />
+						</Template>
+						<ItemTemplate Path="#Crow.WindowButton.template"/>
+					</ListBox>
+				</Group>
+				<Container Name="Content" MinimumSize="0,0" Height="95%" VerticalAlignment="Bottom" />
+			</Group>
+		</Border>	
+	</Template>
 	<VerticalStack RootDataLevel="true" >
 		<HorizontalStack Height="Fit">
-			<CheckBox Caption="Scroll on Output" IsChecked="{²../../log.ScrollOnOutput}"/>
+			<CheckBox MinimumSize = "80,20" Caption="Scroll on Output" IsChecked="{²../../log.ScrollOnOutput}"/>
 		</HorizontalStack>
 		<HorizontalStack Spacing="0">
 			<LogViewerWidget Name="log" Lines="{MainLog}" Font="${LogFont}" MaxScrollX="1000" ContextCommands="{LogContextMenu}"/>

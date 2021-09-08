@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<HorizontalStack Height="Fit" Background="vgradient|0:Grey|0.3:Jet|0.7:Jet|1:Black" VerticalAlignment="Bottom" Margin="5">
+<HorizontalStack Height="Fit" Background="${MenusBackground}" VerticalAlignment="Bottom" Margin="4">
 	<Menu Data="{Commands}" Height="Stretched" Width="Fit">
 		<Template>
 			<HorizontalStack Name="ItemsContainer" />
@@ -12,7 +12,10 @@
 			</MenuItem>
 		</ItemTemplate>		
 	</Menu>
-	<CheckBox Caption="Hint" IsChecked="{²EnableHint}" />
+	<CheckBox Caption="Hint" IsChecked="{²EnableHint}" Height="Stretched"
+			Background="Transparent" Foreground="White"
+			Checked="{Background=${ControlHighlight}}"
+			Unchecked = "{Background=Transparent}"/>
 	<Widget Width="Stretched"/>
 	<VerticalStack Style="hsStatus">
 		<Label Style="labStatus" Text="State:" />

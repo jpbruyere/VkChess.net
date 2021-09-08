@@ -1,17 +1,14 @@
 ﻿<?xml version="1.0"?>
-<Border Name="SizeHandle" Style="winBorder"  CornerRadius="{./CornerRadius}" Background="{./Background}" >
+<Border Name="SizeHandle" Style="winBorder" CornerRadius="{./CornerRadius}" Background="{./Background}" >
 	<VerticalStack Spacing="0">
-		<Group Margin="6" Height="Fit">
-			<Label Font="serif, 20" Name="MoveHandle" Width="Fit" Foreground="${WindowTitleBarForeground" Margin="2" HorizontalAlignment="Center" Text="{./Caption}" />
+		<Group Margin="2" Height="Fit">
+			<Label Font="serif, 18" Name="MoveHandle" Width="90%" Foreground="${WindowTitleBarForeground" Margin="1" TextAlignment="Center" Text="{./Caption}" />
 			<ListBox Data="{./Commands}" Fit="true" HorizontalAlignment="Right" VerticalAlignment="Top">
 				<Template>
 					<HorizontalStack Name="ItemsContainer" />
 				</Template>
 				<ItemTemplate Path="#Crow.WindowButton.template"/>
 			</ListBox>
-
-			<!--<Button MinimumSize="1,1" Fit="true" Command="{./CMDClose}" Template="#Crow.WindowButton.template" VerticalAlignment="Top"
-				HorizontalAlignment="Right"/>-->
 		</Group>
 		<Container Name="Content" MinimumSize="0,0" />
 	</VerticalStack>

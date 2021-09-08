@@ -1,7 +1,13 @@
-﻿ControlHighlight = "DodgerBlue";
+﻿//ControlHighlight = "0.2,0.3,0.8,0.9";
+ControlHighlight = "MidnightBlue";
 LogFont = "consolas, 10";
 WindowBackground = "0.01,0.01,0.02,0.8";
 ContainerBackground = "0.01,0.01,0.01,0.9";
+StateCtrlInactiveBackground = "0.02,0.02,0.02,0.9";
+StateCtrlInactiveForeground = "White";
+StateCtrlHighlightForeground = "Black";
+StatusElementBackground = "#040404";
+MenusBackground = "0.1,0.1,0.1,0.7";
 
 icon {
 	Width="14";
@@ -11,13 +17,13 @@ icon {
 hsStatus {
 	Height="Fit";
 	Width="100";
-	Background="#2E8BB6";
+	Background="${StatusElementBackground}";
 	Margin="3";
 }
 labStatus {
 	Width="Fit";
-	Foreground="LightGrey";
-	Font="serif bold, 10";
+	Foreground="Grey";
+	Font="serif, 10";
 	Margin="0";
 }
 labStatus2 {
@@ -34,12 +40,18 @@ CheckBox {
 	MinimumSize = "80, 30";	
 	Width="Fit";
 	Height= "Fit";
+	Background="${StateCtrlInactiveBackground}";
+	Checked="{Background=${ControlHighlight}}";
+	Unchecked = "{Background=${StateCtrlInactiveBackground}}";	
 }
 RadioButton {
 	Template = "ui/checkBox.tmp";
 	MinimumSize = "80, 30";	
 	Width="Fit";
 	Height= "Fit";
+	Background="${StateCtrlInactiveBackground}";
+	Checked="{Background=${ControlHighlight}}";
+	Unchecked = "{Background=${StateCtrlInactiveBackground}}";	
 }
 Button {	
 	Template = "ui/Button.tmp";
@@ -107,4 +119,8 @@ LightingSlider {
 Vector3Widget {
 	Template = "ui/Vector3Widget.template";
 	Width="Fit";
+}
+winBorder {
+	StickyMouseEnabled="true";
+	StickyMouse="10";
 }
