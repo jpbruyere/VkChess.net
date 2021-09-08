@@ -1,63 +1,99 @@
 ﻿<?xml version="1.0"?>
-<Window Caption="Options" Width="70%" Height="Fit" >
-    <VerticalStack Spacing="1" Margin="10" >
-		<HorizontalStack Height="Fit" Margin="5">
-			<Label Text="Stockfish executable path:"/>
-			<Image Width="30" Height="20" Path="#Crow.Icons.IconAlerte.svg" Visible="{StockfishNotFound}"/>
-			<TextBox Width="Stretched" Text="{²StockfishPath}"/>
-			<Button Caption="..." MinimumSize="1,1" Width="Fit" MouseClick="onFindStockfishPath"/>
-		</HorizontalStack>
-    	<HorizontalStack Height="Fit">
-    		<VerticalStack Spacing="3" Width="50%" >
-		    	<HorizontalStack Height="Fit">
-		    		<Label Width="Stretched" Text="Whites Level:"/>
-		    		<Spinner Width="60" Value="{²WhitesLevel}" Maximum="20" SmallIncrement="1"/>
-		    	</HorizontalStack>
-		    	<HorizontalStack Height="Fit">
-		    		<Label Width="Stretched" Text="Blacks Level:"/>
-		    		<Spinner Width="60" Value="{²BlacksLevel}" Maximum="20" SmallIncrement="1"/>
-		    	</HorizontalStack>
-		    	<HorizontalStack Height="Fit">
-		    		<Label Width="Stretched" Text="AI Search time (ms):" />
-		    		<Spinner Width="60" Value="{²AISearchTime}" Maximum="10000" SmallIncrement="10"/>
-		    	</HorizontalStack>    
-		    	<CheckBox Caption="Whites are AI" IsChecked="{²WhitesAreAI}" Width="Stretched"/>
-		    	<CheckBox Caption="Blacks are AI" IsChecked="{²BlacksAreAI}" Width="Stretched"/>
-		    	<CheckBox Caption="Enable Hint" IsChecked="{²EnableHint}" Width="Stretched"/>    
-	    	</VerticalStack>	    	
-		    	<VerticalStack Margin="20" Spacing="1">
-			    	<HorizontalStack Height="Fit">
-			    		<Label Text="Pce Color" Style="GridLabel"/>
-			    		<Label Text="{DebugCurColor}" Style="GridValue"/>
-			    	</HorizontalStack>	    		
-			    	<HorizontalStack Height="Fit">
-			    		<Label Text="Pce Type" Style="GridLabel"/>
-			    		<Label Text="{DebugCurType}" Style="GridValue" />
-			    	</HorizontalStack>	    		
-			    	<HorizontalStack Height="Fit">
-			    		<Label Text="Pce Cell" Style="GridLabel"/>
-			    		<Label Text="{DebugCurCell}" Style="GridValue"/>
-			    	</HorizontalStack>	    		
-			    	<HorizontalStack Height="Fit">
-			    		<Label Text="Pce Cell pos" Style="GridLabel"/>
-			    		<Label Text="{DebugCurCellPos}" Style="GridValue"/>
-			    	</HorizontalStack>
-		    	</VerticalStack>	    	
-    	</HorizontalStack>
-    	<Border Margin="10">
-    		<VerticalStack>
-		        <HorizontalStack Style="Slid" >
-		            <Label Text="Exposure:" Width="100"/>
-		            <Slider Style="LightingSlider" Value="{²Exposure}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
-		        </HorizontalStack>        
-		        <HorizontalStack Style="Slid" >
-		            <Label Text="Gamma:" Width="100" />
-		            <Slider Style="LightingSlider" Value="{²Gamma}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
-		        </HorizontalStack>
-		        <HorizontalStack Style="Slid" >
-		            <Label Text="IBL Ambient:" Width="100" />
-		            <Slider Style="LightingSlider" Value="{²IBLAmbient}" Maximum="50.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
-		        </HorizontalStack>            
+<Window Caption="Options" Width="50%" Height="Fit" >
+	<VerticalStack Spacing="1" Margin="10" >
+		<VerticalStack Height="Fit" Background="${ContainerBackground}" Margin="5">
+			<HorizontalStack >
+				<Label Text="Stockfish executable path:"/>
+				<Image Width="30" Height="20" Path="#Crow.Icons.IconAlerte.svg" Visible="{StockfishNotFound}"/>
+			</HorizontalStack>
+			<HorizontalStack Margin="5">
+				<TextBox Width="Stretched" Text="{²StockfishPath}"/>
+				<Button Caption="..." MinimumSize="1,1" Width="Fit" MouseClick="onFindStockfishPath"/>
+			</HorizontalStack>
+		</VerticalStack>
+		<!--<HorizontalStack Height="Fit">-->
+		<Expandable Caption="Game" IsExpanded="true">
+			<VerticalStack Height="Fit" Spacing="3"  >
+				<HorizontalStack Height="Fit">
+					<Label Width="Stretched" Text="Whites Level:"/>
+					<Spinner Width="60" Value="{²WhitesLevel}" Maximum="20" SmallIncrement="1"/>
+				</HorizontalStack>
+				<HorizontalStack Height="Fit">
+					<Label Width="Stretched" Text="Blacks Level:"/>
+					<Spinner Width="60" Value="{²BlacksLevel}" Maximum="20" SmallIncrement="1"/>
+				</HorizontalStack>
+				<HorizontalStack Height="Fit">
+					<Label Width="Stretched" Text="AI Search time (ms):" />
+					<Spinner Width="60" Value="{²AISearchTime}" Maximum="10000" SmallIncrement="10"/>
+				</HorizontalStack>    
+				<CheckBox Caption="Whites are AI" IsChecked="{²WhitesAreAI}" Width="Stretched"/>
+				<CheckBox Caption="Blacks are AI" IsChecked="{²BlacksAreAI}" Width="Stretched"/>
+				<CheckBox Caption="Enable Hint" IsChecked="{²EnableHint}" Width="Stretched"/>
+				<HorizontalStack Style="Slid" >
+					<Label Text="Cells Highlighting:" Width="100"/>
+					<Slider Style="LightingSlider" Value="{²CellHighlightIntensity}" Maximum="50.0" SmallIncrement="0.1" LargeIncrement="1"/>
+				</HorizontalStack>
+				<HorizontalStack Style="Slid" >
+					<Label Text="Cells Dim:" Width="100"/>
+					<Slider Style="LightingSlider" Value="{²CellHighlightDim}" Maximum="50.0" SmallIncrement="0.1" LargeIncrement="1"/>
+				</HorizontalStack>
+			</VerticalStack>	    	
+		</Expandable>
+			<!--<VerticalStack Margin="20" Spacing="1">
+				<HorizontalStack Height="Fit">
+					<Label Text="Pce Color" Style="GridLabel"/>
+					<Label Text="{DebugCurColor}" Style="GridValue"/>
+				</HorizontalStack>	    		
+				<HorizontalStack Height="Fit">
+					<Label Text="Pce Type" Style="GridLabel"/>
+					<Label Text="{DebugCurType}" Style="GridValue" />
+				</HorizontalStack>	    		
+				<HorizontalStack Height="Fit">
+					<Label Text="Pce Cell" Style="GridLabel"/>
+					<Label Text="{DebugCurCell}" Style="GridValue"/>
+				</HorizontalStack>	    		
+				<HorizontalStack Height="Fit">
+					<Label Text="Pce Cell pos" Style="GridLabel"/>
+					<Label Text="{DebugCurCellPos}" Style="GridValue"/>
+				</HorizontalStack>
+			</VerticalStack>	    	
+		</HorizontalStack>-->
+		<Expandable Caption="Camera" IsExpanded="false">
+			<VerticalStack Height="Fit">
+				<Vector3Widget Caption="Rotation" Value="{²CameraRotation}" SmallIncrement="0.01" LargeIncrement="0.1" Maximum="7.0" Decimals="2"/>
+				<Vector3Widget Caption="Position" Value="{²CameraPosition}" SmallIncrement="0.1" LargeIncrement="1.0" Maximum="20.0" Decimals="1"/>
+				<HorizontalStack Style="Slid" >
+					<Label Text="Camera FOV:" Width="100" />
+					<Slider Style="LightingSlider" Value="{²CameraFOV}" Decimals="0" Maximum="120" SmallIncrement="1" LargeIncrement="5"/>
+				</HorizontalStack>            
+				<!--<HorizontalStack Style="Slid" >
+					<Label Text="Camera Angle:" Width="100" />
+					<Slider Style="LightingSlider" Value="{²CameraAngle}" Decimals="1" Maximum="3.0" SmallIncrement="0.1" LargeIncrement="0.1"/>
+				</HorizontalStack>            
+				<HorizontalStack Style="Slid" >
+					<Label Text="Camera Y:" Width="100" />
+					<Slider Style="LightingSlider" Value="{²CameraY}" Decimals="1" Maximum="30.0" SmallIncrement="0.1" LargeIncrement="1.0"/>
+				</HorizontalStack>            
+				<HorizontalStack Style="Slid" >
+					<Label Text="Camera Z:" Width="100" />
+					<Slider Style="LightingSlider" Value="{²CameraZ}" Decimals="0" Maximum="30.0" SmallIncrement="1.0" LargeIncrement="5.0"/>
+				</HorizontalStack>-->
+			</VerticalStack>
+		</Expandable>
+		<Expandable Caption="Lighting" IsExpanded="false">
+			<VerticalStack Height="Fit">
+				<HorizontalStack Style="Slid" >
+					<Label Text="Exposure:" Width="100"/>
+					<Slider Style="LightingSlider" Value="{²Exposure}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
+				</HorizontalStack>        
+				<HorizontalStack Style="Slid" >
+					<Label Text="Gamma:" Width="100" />
+					<Slider Style="LightingSlider" Value="{²Gamma}" Maximum="10.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
+				</HorizontalStack>
+				<HorizontalStack Style="Slid" >
+					<Label Text="IBL Ambient:" Width="100" />
+					<Slider Style="LightingSlider" Value="{²IBLAmbient}" Maximum="50.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
+				</HorizontalStack>            
 				<EnumSelector Caption="Sample count" EnumValue="{²SampleCount}" Height="Fit" Width="Stretched">
 					<Template>
 						<GroupBox Caption="{./Caption}" CornerRadius="{./CornerRadius}" Foreground="{./Foreground}" Background="{./Background}">
@@ -66,7 +102,7 @@
 					</Template>
 				</EnumSelector>
 			</VerticalStack>
-        </Border>
-    </VerticalStack>
+		</Expandable>
+	</VerticalStack>
 </Window>
 

@@ -73,10 +73,9 @@ float linearDepth(float depth)
     float z = depth * 2.0f - 1.0f; 
     return (2.0f * NEAR_PLANE * FAR_PLANE) / (FAR_PLANE + NEAR_PLANE - z * (FAR_PLANE - NEAR_PLANE));   
 }
-
 void main() 
 {
-		const float reflectionCoef = 0.6;
+		const float reflectionCoef = 0.4;
 		//ivec2 ts = textureSize(samplerHDR, 0);
 		//vec4 hdrColor = texelFetch (samplerHDR, ivec2(gl_FragCoord.xy), gl_SampleID);
 		
@@ -105,6 +104,7 @@ void main()
 			float curLength = step;
 			bool hit = false;
 			vec2 uv;
+			float s = step;
 
 			for (int i=0; i<maxStep; i++) {
 
@@ -116,25 +116,67 @@ void main()
 				if (uv.x < 0 || uv.y < 0 || uv.x > 1 || uv.y > 1)
 					break;
 
-				vec4 cp = texture(gbPos, uv);
-
 				float linDepthCP = linearDepth (ndc.z / ndc.w);
+				vec4 cp = texture(gbPos, uv);
 				//outColor = vec4 (vec3 (linDepthCP/100.0), 1);
 				/*outColor = vec4 (1,0,0, 1);
 				return;*/
 
 				if (abs(linDepthCP - cp.a) < depthTreshold) {
+					/*outColor = vec4 (vec3(linDepthCP/100),1);
+					return;*/
 					hit = true;
 					break;
-				}
-
-				curLength += step;
+				} 
+				/*cp = textureOffset(gbPos, uv, ivec2 (0,1));
+				if (abs(linDepthCP - cp.a) < depthTreshold) {
+					hit = true;
+					break;
+				} 
+				cp = textureOffset(gbPos, uv, ivec2 (1,0));
+				if (abs(linDepthCP - cp.a) < depthTreshold) {
+					hit = true;
+					break;
+				} 
+				cp = textureOffset(gbPos, uv, ivec2 (0,-1));
+				if (abs(linDepthCP - cp.a) < depthTreshold) {
+					hit = true;
+					break;
+				} 
+				cp = textureOffset(gbPos, uv, ivec2 (-1,0));
+				if (abs(linDepthCP - cp.a) < depthTreshold) {
+					hit = true;
+					break;
+				} 
+				cp = textureOffset(gbPos, uv, ivec2 (1,1));
+				if (abs(linDepthCP - cp.a) < depthTreshold) {
+					hit = true;
+					break;
+				} 
+				cp = textureOffset(gbPos, uv, ivec2 (1,-1));
+				if (abs(linDepthCP - cp.a) < depthTreshold) {
+					hit = true;
+					break;
+				} 
+				cp = textureOffset(gbPos, uv, ivec2 (-1,-1));
+				if (abs(linDepthCP - cp.a) < depthTreshold) {
+					hit = true;
+					break;
+				} 
+				cp = textureOffset(gbPos, uv, ivec2 (-1,1));
+				if (abs(linDepthCP - cp.a) < depthTreshold) {
+					hit = true;
+					break;
+				} */
+				curLength += s;
+				//s *= 1.2;
 			}
 			
 
 			if (hit)
 				hdrColor = mix (hdrColor, texture(samplerHDR, uv), reflectionCoef);
-				//hdrColor = vec4 (1,0,0,1);// texture(samplerHDR, uv);
+				//hdrColor = vec4 (1,0,0,1);
+				
 			
 		}
 

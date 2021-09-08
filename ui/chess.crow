@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<HorizontalStack Height="Fit" Background="vgradient|0:Grey|0.3:Jet|0.7:Jet|1:Black" VerticalAlignment="Bottom" Margin="10">
-	<CheckBox Caption="Hint" IsChecked="{²EnableHint}" />
-	<Menu Data="{Commands}" Height="Stretched" Width="Stretched">
+<HorizontalStack Height="Fit" Background="vgradient|0:Grey|0.3:Jet|0.7:Jet|1:Black" VerticalAlignment="Bottom" Margin="5">
+	<Menu Data="{Commands}" Height="Stretched" Width="Fit">
 		<Template>
 			<HorizontalStack Name="ItemsContainer" />
 		</Template>
-		<ItemTemplate>
-			<Button Command="{}">
-				<Label Font="{./Font}" Name="caption" Margin="3" Foreground="LightGrey" Text="{./Caption}" />
-			</Button>
-		</ItemTemplate>
+		<ItemTemplate DataType="Crow.Command" Path="ui/menuCommand.itmp"/>
+		<ItemTemplate DataType="Crow.CommandGroup" >
+			<MenuItem Data="{Commands}" Width="Fit" Height="Stretched" IsEnabled="{CanExecute}"
+					Template="ui/menuItem.template"
+					ItemTemplate="ui/menuItem.itmp">			
+			</MenuItem>
+		</ItemTemplate>		
 	</Menu>
+	<CheckBox Caption="Hint" IsChecked="{²EnableHint}" />
+	<Widget Width="Stretched"/>
 	<VerticalStack Style="hsStatus">
 		<Label Style="labStatus" Text="State:" />
 		<Label Style="labStatus2" Text="{CurrentState}" />

@@ -1,0 +1,10 @@
+﻿<?xml version="1.0"?>
+<Button Command="{}" Width="Stretched">
+	<Template>
+		<Container Width="Stretched" Height="Stretched" Margin="6"
+						MouseEnter="{Background=${ControlHighlight}}"
+						MouseLeave="{Background=Transparent}">
+			<Label Text="{./Caption}" HorizontalAlignment="Left" />
+		</Container>
+	</Template>
+</Button>

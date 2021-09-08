@@ -1,6 +1,9 @@
 ﻿<?xml version="1.0"?>
-<Window Caption="Log" Width="Stretched" Height="20%" VerticalAlignment="Top" >
+<Window Caption="Log" Width="Stretched" Height="40%" VerticalAlignment="Top" >
 	<VerticalStack RootDataLevel="true" >
+		<HorizontalStack Height="Fit">
+			<CheckBox Caption="Scroll on Output" IsChecked="{²../../log.ScrollOnOutput}"/>
+		</HorizontalStack>
 		<HorizontalStack Spacing="0">
 			<LogViewerWidget Name="log" Lines="{MainLog}" Font="${LogFont}" MaxScrollX="1000" ContextCommands="{LogContextMenu}"/>
 			<ScrollBar Name="scrollbarY" Value="{²../log.ScrollY}" CursorRatio="{../log.ChildHeightRatio}" Maximum="{../log.MaxScrollY}" />

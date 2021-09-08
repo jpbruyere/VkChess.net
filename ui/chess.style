@@ -1,5 +1,7 @@
 ﻿ControlHighlight = "DodgerBlue";
 LogFont = "consolas, 10";
+WindowBackground = "0.01,0.01,0.02,0.8";
+ContainerBackground = "0.01,0.01,0.01,0.9";
 
 icon {
 	Width="14";
@@ -44,9 +46,17 @@ Button {
 	MinimumSize = "80, 30";	
 	Width="Fit";
 }
+MenuItem {
+	MinimumSize = "80, 30";
+}
 Window {
-	CornerRadius="5";
-	Background="0.1,0.1,0.1,0.8";
+	Template="ui/Window.template";
+	AllowedStates="Normal";
+	CornerRadius="0";
+	Background="${WindowBackground}";
+}
+Expandable {
+	Background="${ContainerBackground}";
 }
 Slider {
 	Foreground = "Jet";
@@ -90,7 +100,11 @@ ColorSlider {
 }
 LightingSlider {
 	Template = "ui/slider.tmp";
-	Height = "40";
+	Height = "20";
 	Width = "Stretched";
 	CursorSize = "50";
+}
+Vector3Widget {
+	Template = "ui/Vector3Widget.template";
+	Width="Fit";
 }

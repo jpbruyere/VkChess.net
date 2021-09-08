@@ -3,11 +3,11 @@
     <VerticalStack Spacing="1" Margin="10" >
 		<HorizontalStack Style="Slid" >
 			<Label Text="Step:" Width="100"/>
-			<Slider Style="LightingSlider" Value="{²SSRStep}" Decimals="4" Maximum="0.1" SmallIncrement="0.0001" LargeIncrement="0.01"/>
+			<Slider Style="LightingSlider" Value="{²SSRStep}" Decimals="4" Maximum="1.0" SmallIncrement="0.0001" LargeIncrement="0.01"/>
 		</HorizontalStack>        
 		<HorizontalStack Style="Slid" >
 			<Label Text="Depth Threshold:" Width="100" />
-			<Slider Style="LightingSlider" Value="{²SSRThreshold}" Decimals="4" Maximum="0.1" SmallIncrement="0.0001" LargeIncrement="0.01"/>
+			<Slider Style="LightingSlider" Value="{²SSRThreshold}" Decimals="4" Maximum="1.0" SmallIncrement="0.0001" LargeIncrement="0.01"/>
 		</HorizontalStack>
 		<HorizontalStack Style="Slid" >
 			<Label Text="Max Step Count:" Width="100" />

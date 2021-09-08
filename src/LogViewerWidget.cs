@@ -67,6 +67,10 @@ namespace Crow
 					lines.ListAdd += Lines_ListAdd;
 					lines.ListRemove += Lines_ListRemove;
 					lines.ListClear += Lines_ListClear;
+
+					MaxScrollY = lines.Count - visibleLines;
+					if (scrollOnOutput)
+						ScrollY = MaxScrollY;
 				}
 				NotifyValueChanged ("Lines", lines);
 				RegisterForGraphicUpdate ();
@@ -178,6 +182,9 @@ namespace Crow
 					gr.Fill ();
 				}
 			}
+		}
+		protected override void Dispose (bool disposing) {
+			Lines = null;
 		}
 
 	}
