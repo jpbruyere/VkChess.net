@@ -118,14 +118,14 @@ namespace vkChess
 		public DeferredPbrRendererBase (Device dev, SwapChain swapChain, PresentQueue presentQueue, string cubemapPath, float nearPlane, float farPlane) {
 			this.dev = dev;
 			this.swapChain = swapChain;
-			this.presentQueue = presentQueue;            
+			this.presentQueue = presentQueue;
 			pipelineCache = new PipelineCache (dev);
 
 			descriptorPool = new DescriptorPool (dev, 3,
 				new VkDescriptorPoolSize (VkDescriptorType.UniformBuffer, 3),
 				new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 6),
 				new VkDescriptorPoolSize (VkDescriptorType.InputAttachment, 5)
-			);                
+			);
 
 			uboMatrices = new HostBuffer (dev, VkBufferUsageFlags.UniformBuffer, matrices, true);
 			uboLights = new HostBuffer<Light> (dev, VkBufferUsageFlags.UniformBuffer, lights, true);
@@ -154,7 +154,7 @@ namespace vkChess
 			renderPass.AddAttachment (swapChain.ColorFormat, VkImageLayout.ColorAttachmentOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.DontCare);//GBuff0 (color + roughness) and final color before resolve
 			renderPass.AddAttachment (VkFormat.R8g8b8a8Unorm, VkImageLayout.ColorAttachmentOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.DontCare);//GBuff1 (emit + metal)
 			renderPass.AddAttachment (MRT_FORMAT, VkImageLayout.ShaderReadOnlyOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.Store, VkImageLayout.ShaderReadOnlyOptimal);//GBuff2 (normals + AO)
-			renderPass.AddAttachment (MRT_FORMAT, VkImageLayout.ShaderReadOnlyOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.Store, VkImageLayout.ShaderReadOnlyOptimal);//GBuff3 (Pos + depth)			
+			renderPass.AddAttachment (MRT_FORMAT, VkImageLayout.ShaderReadOnlyOptimal, NUM_SAMPLES, VkAttachmentLoadOp.Clear, VkAttachmentStoreOp.Store, VkImageLayout.ShaderReadOnlyOptimal);//GBuff3 (Pos + depth)
 
 			renderPass.ClearValues.Add (new VkClearValue { color = new VkClearColorValue (0.0f, 0.0f, 0.0f) });
 			renderPass.ClearValues.Add (new VkClearValue { depthStencil = new VkClearDepthStencilValue (1.0f, 0) });
@@ -206,7 +206,7 @@ namespace vkChess
 				VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.ShaderRead);
 			renderPass.AddDependency (SP_COMPOSE, Vk.SubpassExternal,
 				VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.Transfer,
-				VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.TransferRead);				
+				VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.TransferRead);
 		}
 
 		void init (float nearPlane, float farPlane, string cubemapPath) {
@@ -238,7 +238,7 @@ namespace vkChess
 			//renderPass.PNext = new PNextNode<VkRenderPassMultiviewCreateInfo> (ciMultiview);
 
 			using (GraphicPipelineConfig cfg = GraphicPipelineConfig.CreateDefault (VkPrimitiveTopology.TriangleList, NUM_SAMPLES)) {
-				
+
 				cfg.rasterizationState.cullMode = VkCullModeFlags.None;
 
 				if (NUM_SAMPLES != VkSampleCountFlags.SampleCount1) {
@@ -317,7 +317,7 @@ namespace vkChess
 			matrices.prefilteredCubeMipLevels = envCube.prefilterCube.CreateInfo.mipLevels;
 
 			DescriptorSetWrites dsMainWrite = new DescriptorSetWrites (dsMain, descLayoutMain.Bindings.GetRange (0, 5).ToArray ());
-			dsMainWrite.Write (dev, 
+			dsMainWrite.Write (dev,
 				uboMatrices.Descriptor,
 				envCube.irradianceCube.Descriptor,
 				envCube.prefilterCube.Descriptor,
@@ -328,7 +328,7 @@ namespace vkChess
 			dsMainWrite.Write (dev, shadowMapRenderer.shadowMap.Descriptor);
 
 			multiViewMasks.Unpin ();
-			
+
 		}
 
 		public void LoadModel (Queue transferQ, string path) {
@@ -364,7 +364,7 @@ namespace vkChess
 
 				renderPass.BeginSubPass (cmd);
 				gBuffPipeline.Bind(cmd);
-				
+
 				if (instanceBuf != null)
 					model.Draw(cmd, gBuffPipeline.Layout, instanceBuf, false, instances);
 			}
@@ -395,6 +395,7 @@ namespace vkChess
 
 		public void MoveLight (Vector4 dir) {
 			lights[lightNumDebug].position += dir * lightMoveSpeed;
+			shadowMapRenderer.updateLightMatricesRequested = true;
 			shadowMapRenderer.updateShadowMap = true;
 		}
 
@@ -474,7 +475,7 @@ namespace vkChess
 
 		public void Dispose () {
 			dev.WaitIdle ();
-			
+
 			frameBuffers?.Dispose ();
 
 			gbColorRough.Dispose ();
@@ -488,7 +489,7 @@ namespace vkChess
 			debugPipeline.Dispose ();
 			depthPrepassPipeline.Dispose ();
 
-			descLayoutMain.Dispose ();            
+			descLayoutMain.Dispose ();
 			descLayoutGBuff.Dispose ();
 
 			uboMatrices.Dispose ();

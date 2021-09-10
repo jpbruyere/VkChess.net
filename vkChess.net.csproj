@@ -5,11 +5,11 @@
 		<TargetFrameworks>netcoreapp3.1</TargetFrameworks>
 		<TargetFramework>netcoreapp3.1</TargetFramework>
 		<EnableDefaultNoneItems>false</EnableDefaultNoneItems>
-		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>		
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 		<OutputPath>$(SolutionDir)build\$(Configuration)\</OutputPath>
 		<IntermediateOutputPath>$(SolutionDir)build\obj\$(Configuration)\</IntermediateOutputPath>
 	</PropertyGroup>
-	
+
 	<ItemGroup>
 		<GLSLShader Include="shaders\**\*.frag;shaders\**\*.vert;shaders\**\*.comp;shaders\**\*.geom" />
 		<None Include="data\**\*.*;ui\**\*.*">
@@ -20,8 +20,8 @@
 	<ItemGroup>
 		<PackageReference Include="VkCrowWindow" Version="0.3.4-beta" />
 		<PackageReference Include="vke" Version="0.2.2-beta" />
-		<PackageReference Include="SpirVTasks" Version="0.1.44" />		
-		<PackageReference Include="vke.EnvironmentPipeline" Version="0.2.0-beta" />		
+		<PackageReference Include="SpirVTasks" Version="0.1.44" />
+		<PackageReference Include="vke.EnvironmentPipeline" Version="0.2.0-beta" />
 		<PackageReference Include="vke.gltfLoader" Version="0.2.0-beta" />
 	</ItemGroup>
 	<ItemGroup>

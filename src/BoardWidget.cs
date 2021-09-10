@@ -23,11 +23,11 @@ namespace vkChess
 					RegisterForGraphicUpdate ();
 					return;
 				}
-				board = value; 
+				board = value;
 				NotifyValueChanged ("Board", board);
 				RegisterForGraphicUpdate ();
 			}
-		} 
+		}
 		public BoardWidget ():base()
 		{
 			sprites = new SvgPicture ("data/Pieces.svg");
@@ -100,7 +100,7 @@ namespace vkChess
 						spriteName = "w";
 					else
 						spriteName = "b";
-					
+
 					switch (board[x,y].Type) {
 					case PieceType.Pawn:
 						spriteName += "p";
@@ -126,7 +126,7 @@ namespace vkChess
 						(int)(gridY + (7 - y) * cellSize),
 						(int)cellSize,
 						(int)cellSize),spriteName);
-				}				
+				}
 			}
 		}
 	}

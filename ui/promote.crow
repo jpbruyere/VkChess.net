@@ -1,12 +1,35 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Container>
-	<Border Fit="True"
-			BorderWidth="1" CornerRadius="25" Background="0.4,0.4,0.4,0.8">
-		<VerticalStack Fit="True" Margin="20">
-			<Button Caption="Queen"	MouseClick="onPromoteToQueenClick"/>
+<Container Width="30%" Height="50%">
+	<Border CornerRadius="25" Background="${WindowBackground}">
+		<VerticalStack Margin="20" Spacing="0">
+			<Container Height="25%" Margin="${chessPceButtonMargin}">
+				<Border Style="chessPceButton" MouseClick="onPromoteToQueenClick">
+					<Image Margin="${chessPceButtonImageMargin}"
+						Path="data/Pieces.svg" SvgSub="wq"/>
+				</Border>
+			</Container>
+			<Container Height="25%" Margin="${chessPceButtonMargin}">
+				<Border Style="chessPceButton" MouseClick="onPromoteToBishopClick">
+					<Image Margin="${chessPceButtonImageMargin}"
+						Path="data/Pieces.svg" SvgSub="wb"/>
+				</Border>
+			</Container>
+			<Container Height="25%" Margin="${chessPceButtonMargin}">
+				<Border Style="chessPceButton" MouseClick="onPromoteToRookClick">
+					<Image Margin="${chessPceButtonImageMargin}"
+						Path="data/Pieces.svg" SvgSub="wr"/>
+				</Border>
+			</Container>
+			<Container Height="25%" Margin="${chessPceButtonMargin}">
+				<Border Style="chessPceButton" MouseClick="onPromoteToKnightClick">
+					<Image Margin="${chessPceButtonImageMargin}"
+						Path="data/Pieces.svg" SvgSub="wk"/>
+				</Border>
+			</Container>
+			<!--<Button Caption="Queen"	MouseClick="onPromoteToQueenClick"/>
 			<Button Caption="Bishop" MouseClick="onPromoteToBishopClick"/>
 			<Button Caption="Rook" MouseClick="onPromoteToRookClick"/>
-			<Button Caption="Knight" MouseClick="onPromoteToKnightClick"/>
+			<Button Caption="Knight" MouseClick="onPromoteToKnightClick"/>-->
 		</VerticalStack>
 	</Border>
 </Container>

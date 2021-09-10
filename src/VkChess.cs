@@ -19,9 +19,9 @@ namespace vkChess
 	public enum PieceType { Pawn, Rook, Knight, Bishop, King, Queen };
 
 	public class VkChess : CrowWindow {
-#if NETCOREAPP		
+#if NETCOREAPP
 		static IntPtr resolveUnmanaged (Assembly assembly, String libraryName) {
-			
+
 			switch (libraryName)
 			{
 				case "glfw3":
@@ -29,7 +29,7 @@ namespace vkChess
 				case "rsvg-2.40":
 					return  System.Runtime.InteropServices.NativeLibrary.Load("rsvg-2", assembly, null);
 			}
-			Console.WriteLine ($"[UNRESOLVE] {assembly} {libraryName}");			
+			Console.WriteLine ($"[UNRESOLVE] {assembly} {libraryName}");
 			return IntPtr.Zero;
 		}
 
@@ -39,14 +39,14 @@ namespace vkChess
 #endif
 		VkChess(){}
 		static void Main (string [] args) {
-			Instance.VALIDATION = true;
-			Instance.RENDER_DOC_CAPTURE = false;
+			//Instance.VALIDATION = true;
+			//Instance.RENDER_DOC_CAPTURE = true;
 			//SwapChain.PREFERED_FORMAT = VkFormat.B8g8r8a8Unorm;
 			DeferredPbrRendererBase.MAX_MATERIAL_COUNT = 3;
 			DeferredPbrRendererBase.MRT_FORMAT = VkFormat.R16g16b16a16Sfloat;
 			DeferredPbrRendererBase.HDR_FORMAT = VkFormat.R16g16b16a16Sfloat;
-			PbrModelTexArray.TEXTURE_DIM = 512;
-			ShadowMapRenderer.SHADOWMAP_SIZE = 1024;			
+			PbrModelTexArray.TEXTURE_DIM = 1024;
+			ShadowMapRenderer.SHADOWMAP_SIZE = 1024;
 			using (VkChess app = new VkChess ())
 				app.Run ();
 		}
@@ -58,7 +58,7 @@ namespace vkChess
 
 		public override string [] EnabledDeviceExtensions => new string [] {
 			Ext.D.VK_KHR_swapchain,
-			Ext.D.VK_KHR_multiview
+			//Ext.D.VK_KHR_multiview
 		};
 		protected override void configureEnabledFeatures (VkPhysicalDeviceFeatures available_features, ref VkPhysicalDeviceFeatures enabled_features) {
 			base.configureEnabledFeatures (available_features, ref enabled_features);
@@ -85,69 +85,74 @@ namespace vkChess
 		//vke.DebugUtils.Messenger dbgmsg;
 #endif
 		protected override void CreateRenderPass () {
-			renderPass = new RenderPass (dev, swapChain.ColorFormat, DeferredPbrRendererBase.NUM_SAMPLES);			
-			/*renderPass = new RenderPass (dev, VkSampleCountFlags.SampleCount1);
-			renderPass.AddAttachment (swapChain.ColorFormat, VkImageLayout.PresentSrcKHR, VkSampleCountFlags.SampleCount1,
-				VkAttachmentLoadOp.Load, VkAttachmentStoreOp.DontCare, VkImageLayout.ColorAttachmentOptimal);//final outpout
-			SubPass subpass0 = new SubPass ();
-			subpass0.AddColorReference (0, VkImageLayout.ColorAttachmentOptimal);
-			renderPass.AddSubpass (subpass0);
-			renderPass.AddDependency (Vk.SubpassExternal, 0,
-				VkPipelineStageFlags.BottomOfPipe, VkPipelineStageFlags.ColorAttachmentOutput,
-				VkAccessFlags.MemoryRead, VkAccessFlags.ColorAttachmentWrite);
-			renderPass.AddDependency (0, Vk.SubpassExternal,
-				VkPipelineStageFlags.ColorAttachmentOutput, VkPipelineStageFlags.BottomOfPipe,
-				VkAccessFlags.ColorAttachmentWrite, VkAccessFlags.MemoryRead);*/
-		}		
+			renderPass = new RenderPass (dev, swapChain.ColorFormat, DeferredPbrRendererBase.NUM_SAMPLES);
+		}
 		GraphicPipeline plToneMap;
 		DescriptorSetLayout dslToneMap;
 		protected override void CreateDescriptors () {
-			dsPool = new DescriptorPool (dev, 1,
-				new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 4),
-				new VkDescriptorPoolSize (VkDescriptorType.UniformBuffer, 1));
+			dsPool = EnableReflections ?
+				new DescriptorPool (dev, 1,
+					new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 4),
+					new VkDescriptorPoolSize (VkDescriptorType.UniformBuffer, 1)) :
+				new DescriptorPool (dev, 1,
+					new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 2));
 			descSet = dsPool.Allocate (dslToneMap);
 		}
 		protected override void CreatePipeline () {
-			using (GraphicPipelineConfig cfg = GraphicPipelineConfig.CreateDefault (VkPrimitiveTopology.TriangleList, DeferredPbrRendererBase.NUM_SAMPLES)) {			
+			using (GraphicPipelineConfig cfg = GraphicPipelineConfig.CreateDefault (VkPrimitiveTopology.TriangleList, DeferredPbrRendererBase.NUM_SAMPLES)) {
 				if (DeferredPbrRendererBase.NUM_SAMPLES != VkSampleCountFlags.SampleCount1) {
 					cfg.multisampleState.sampleShadingEnable = true;
 					cfg.multisampleState.minSampleShading = 0.5f;
 				}
 				dslToneMap = new DescriptorSetLayout (dev, 0,
 					new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-					new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-					new VkDescriptorSetLayoutBinding (2, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-					new VkDescriptorSetLayoutBinding (3, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
-					new VkDescriptorSetLayoutBinding (4, VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer)
+					new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler)
 				);
-				cfg.Layout = new PipelineLayout (dev,
-					new VkPushConstantRange (VkShaderStageFlags.Fragment, 20u), dslToneMap);
+				if (EnableReflections) {
+					dslToneMap.Bindings.AddRange ( new VkDescriptorSetLayoutBinding[] {
+						new VkDescriptorSetLayoutBinding (2, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
+						new VkDescriptorSetLayoutBinding (3, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
+						new VkDescriptorSetLayoutBinding (4, VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer)
+					});
+					cfg.Layout = new PipelineLayout (dev,
+						new VkPushConstantRange (VkShaderStageFlags.Fragment, 20u), dslToneMap);
+				} else
+					cfg.Layout = new PipelineLayout (dev,
+						new VkPushConstantRange (VkShaderStageFlags.Fragment, 8u), dslToneMap);
 
 				cfg.RenderPass = renderPass;
 				cfg.AddShaders (
 					new ShaderInfo (dev, VkShaderStageFlags.Vertex, "#vke.FullScreenQuad.vert.spv"),
-					new ShaderInfo (dev, VkShaderStageFlags.Fragment, "#vkChess.net.tone_mapping2.frag.spv")
+					new ShaderInfo (dev, VkShaderStageFlags.Fragment,
+						EnableReflections ?
+							"#vkChess.net.tone_mapping_ssr.frag.spv" : "#vkChess.net.tone_mapping.frag.spv")
 				);
 
 				plToneMap = new GraphicPipeline (cfg);
 
 			}
 		}
-		protected override void recordUICmd (PrimaryCommandBuffer cmd, int imageIndex) {			
+		protected override void recordUICmd (PrimaryCommandBuffer cmd, int imageIndex) {
 			renderPass.Begin(cmd, frameBuffers[imageIndex]);
 
 			cmd.SetViewport (frameBuffers[imageIndex].Width, frameBuffers[imageIndex].Height);
 			cmd.SetScissor (frameBuffers[imageIndex].Width, frameBuffers[imageIndex].Height);
 
-			cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 16, new float[] { Exposure, Gamma, SSRStep, SSRThreshold }, 0);
-			cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 4, SSRMaxStepCount, 16);
+			if (EnableReflections) {
+				cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 16, new float[] { Exposure, Gamma, SSRStep, SSRThreshold }, 0);
+				cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 4, SSRMaxStepCount, 16);
+			} else
+				cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 16, new float[] { Exposure, Gamma}, 0);
+
 			plToneMap.BindDescriptorSet (cmd, descSet);
 			plToneMap.Bind (cmd);
 			cmd.Draw (3, 1, 0, 0);
 
 			renderPass.End (cmd);
-		}		
+		}
 		protected override void initVulkan () {
+			DeferredPbrRendererBase.NUM_SAMPLES =  SampleCount;
+
 			initLog ();
 
 			base.initVulkan ();
@@ -175,20 +180,19 @@ namespace vkChess
 
 			createCamera ();
 
-			DeferredPbrRendererBase.NUM_SAMPLES =  SampleCount;
-
-			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [1], camera.NearPlane, camera.FarPlane);
+			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [0], camera.NearPlane, camera.FarPlane);
 
 			renderer.matrices.scaleIBLAmbient = IBLAmbient;
 			renderer.lights[0].color = new Vector4 (LightStrength);
-			//renderer.LoadModel (transferQ, "data/models/chess.glb");
-			renderer.LoadModel (transferQ, "/mnt/devel/vkChess.net/data/models/chess.glb");
+			renderer.LoadModel (transferQ, "data/models/chess.glb");
+			//renderer.LoadModel (transferQ, "/mnt/devel/vkChess.net/data/models/chess3.glb");
 			// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
 
-			DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,
-				dslToneMap.Bindings[4]);
-			dsw.Write (dev, renderer.uboMatrices.Descriptor);
-
+			if (EnableReflections) {
+				DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,
+					dslToneMap.Bindings[4]);
+				dsw.Write (dev, renderer.uboMatrices.Descriptor);
+			}
 
 			UpdateFrequency = 5;
 
@@ -198,8 +202,6 @@ namespace vkChess
 
 			initBoard ();
 			initStockfish ();
-
-			
 
 			iFace.Load ("ui/chess.crow").DataSource = this;
 
@@ -219,13 +221,13 @@ namespace vkChess
 		}
 
 		string [] cubemapPathes = {
-			"data/textures/papermill.ktx",			
+			"data/textures/papermill.ktx",
 			"data/textures/pisa_cube.ktx",
 			"data/textures/gcanyon_cube.ktx",
 		};
 
 		DeferredPbrRendererBase renderer;
-		
+
 		public struct InstanceData
 		{
 			public Vector4 color;
@@ -279,9 +281,10 @@ namespace vkChess
 
 		public override void UpdateView () {
 			dev.WaitIdle ();
-
-			renderer.UpdateView (camera);
-			updateViewRequested = false;
+			if (updateViewRequested) {
+				renderer.UpdateView (camera);
+				updateViewRequested = false;
+			}
 			if (instanceBuff == null)
 				return;
 			if (renderer.shadowMapRenderer.updateShadowMap)
@@ -313,6 +316,7 @@ namespace vkChess
 			if (Animation.HasAnimations)
 				renderer.shadowMapRenderer.updateShadowMap = true;
 
+			//adapt animation step on current fps
 			fpsAccum += fps;
 			fpsAccumCpt++;
 			if (fpsAccumCpt == fpsAccumLimit) {
@@ -341,9 +345,14 @@ namespace vkChess
 			base.OnResize ();
 			renderer.Resize ();
 
-			DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,
-				dslToneMap.Bindings[1], dslToneMap.Bindings[2], dslToneMap.Bindings[3]);
-			dsw.Write (dev, renderer.HDROutput.Descriptor, renderer.GBuffPosDepthOutput.Descriptor, renderer.GBuffN_AO.Descriptor);
+			if (EnableReflections) {
+				DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,
+					dslToneMap.Bindings[1], dslToneMap.Bindings[2], dslToneMap.Bindings[3]);
+				dsw.Write (dev, renderer.HDROutput.Descriptor, renderer.GBuffPosDepthOutput.Descriptor, renderer.GBuffN_AO.Descriptor);
+			} else {
+				DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,	dslToneMap.Bindings[1]);
+				dsw.Write (dev, renderer.HDROutput.Descriptor);
+			}
 
 			buildCommandBuffers ();
 			updateViewRequested = true;
@@ -400,7 +409,7 @@ namespace vkChess
 			} else if (crow.ProcessMouseWheelChanged ((float)yOffset))
 				return;*/
 			camera.Move (0, 0, (float)yOffset * 4f);
-			CameraPosition = new Vector3 (camera.Position.X, camera.Position.Y, -camera.Position.Z);	 
+			CameraPosition = new Vector3 (camera.Position.X, camera.Position.Y, -camera.Position.Z);
 		}
 		protected override void onMouseMove (double xPos, double yPos) {
 			base.onMouseMove (xPos, yPos);
@@ -445,7 +454,7 @@ namespace vkChess
 			NotifyValueChanged ("DebugCurCellPos", p?.BoardCell);
 
 			if (p != null) {
-				NotifyValueChanged ("DebugCurCell", getChessCell (p.BoardCell.X, p.BoardCell.Y)); 
+				NotifyValueChanged ("DebugCurCell", getChessCell (p.BoardCell.X, p.BoardCell.Y));
 			}else
 				NotifyValueChanged ("DebugCurCell", "");
 		}
@@ -498,10 +507,11 @@ namespace vkChess
 					//check for promotion
 					Piece mp = board [Active.X, Active.Y];
 					if (mp.Type == PieceType.Pawn && Selection.Y == GetPawnPromotionY(CurrentPlayer)) {
+						promotePosition = Selection;
 						showPromoteDialog ();
 						return;
 					} else
-						processMove (getChessCell (Active.X, Active.Y) + getChessCell (Selection.X, Selection.Y));
+						processMove (getChessCell (Active) + getChessCell (Selection));
 
 					if (enableHint)
 						sendToStockfish ("stop");
@@ -532,14 +542,14 @@ namespace vkChess
 					saveCurrentGame ();
 				break;
 			case Glfw.Key.Keypad0:
-				whites [0].X = 0;
-				whites [0].Y = 0;
+				whitePieces [0].X = 0;
+				whitePieces [0].Y = 0;
 				break;
 			case Glfw.Key.Keypad6:
-				whites [0].X++;
+				whitePieces [0].X++;
 				break;
 			case Glfw.Key.Keypad8:
-				whites [0].Y++;
+				whitePieces [0].Y++;
 				break;
 			case Glfw.Key.R:
 				CurrentState = GameState.Play;
@@ -597,7 +607,7 @@ namespace vkChess
 				break;
 			}
 		}
-		
+
 		void onQuitClick (object sender, MouseButtonEventArgs e) {
 			Close ();
 		}
@@ -607,7 +617,7 @@ namespace vkChess
 			lock (movesMutex) {
 				bool hintIsEnabled = EnableHint;
 				EnableHint = false;
-				
+
 				//if (currentState != GameState.Pad && currentState != GameState.Checkmate && !playerIsAi (CurrentPlayer) && playerIsAi (Opponent))//undo ai move
 				if (!playerIsAi (CurrentPlayer) && playerIsAi (Opponent))
 					undoLastMove ();
@@ -620,19 +630,19 @@ namespace vkChess
 				EnableHint = hintIsEnabled;
 			}
 		}
-		 
+
 		void onFindStockfishPath (object sender, MouseButtonEventArgs e) {
 			string stockfishDir = string.IsNullOrEmpty(StockfishPath) ?
 				Directory.GetCurrentDirectory() : System.IO.Path.GetDirectoryName(StockfishPath);
 			string stockfishExe = string.IsNullOrEmpty(StockfishPath) ?
 				"" : System.IO.Path.GetFileName(StockfishPath);
-			
+
 			loadIMLFragment<FileDialog> (@"
 				<FileDialog Caption='Select SDK Folder' CurrentDirectory='" + stockfishDir + @"' SelectedFile='" + stockfishExe + @"'
 							ShowFiles='true' ShowHidden='true'/>",this)
 					.OkClicked += (sender, e) => {
 						StockfishPath = (sender as FileDialog).SelectedFileFullPath;
-					};			
+					};
 		}
 
 		public CommandGroup Commands => new CommandGroup (
@@ -646,8 +656,8 @@ namespace vkChess
 #endif
 				new Command ("Quit", () => Close())
 			),
-			new Command ("Undo", () => undo()),
-			new Command ("Redo", () => Close())
+			new Command ("Undo", () => undo())
+			//new Command ("Redo", () => Close())
 		);
 		void terminateCurrentGame () {
 			if (CurrentState < GameState.Play)
@@ -668,7 +678,7 @@ namespace vkChess
 		void onNewWhiteGame (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/newGame.crow");
 			if (CurrentState < GameState.Play)
-				return;			
+				return;
 			Log(LogType.Custom1, "New White Game");
 
 			terminateCurrentGame();
@@ -691,7 +701,7 @@ namespace vkChess
 		void onNewBlackGame (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/newGame.crow");
 			if (CurrentState < GameState.Play)
-				return;			
+				return;
 			Log(LogType.Custom1, "New Black Game");
 
 			terminateCurrentGame();
@@ -710,12 +720,13 @@ namespace vkChess
 				sendToStockfish ("go movetime " + AISearchTime.ToString());
 			else
 				sendToStockfish ("go depth 1");
-			
-			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", MathHelper.Pi, 0.15f));			
+
+			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", MathHelper.Pi, 0.15f));
 		}
 		void onPromoteToQueenClick (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/promote.crow");
-			processMove (getChessCell (Active.X, Active.Y) + getChessCell (Selection.X, Selection.Y) + "q");
+			processMove (getChessCell (Active) + getChessCell (promotePosition) + "q");
+			promotePosition = -1;
 			if (enableHint)
 				sendToStockfish ("stop");
 			else
@@ -723,7 +734,8 @@ namespace vkChess
 		}
 		void onPromoteToBishopClick (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/promote.crow");
-			processMove (getChessCell (Active.X, Active.Y) + getChessCell (Selection.X, Selection.Y) + "b");
+			processMove (getChessCell (Active) + getChessCell (promotePosition) + "b");
+			promotePosition = -1;
 			if (enableHint)
 				sendToStockfish ("stop");
 			else
@@ -731,7 +743,8 @@ namespace vkChess
 		}
 		void onPromoteToRookClick (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/promote.crow");
-			processMove (getChessCell (Active.X, Active.Y) + getChessCell (Selection.X, Selection.Y) + "r");
+			processMove (getChessCell (Active) + getChessCell (promotePosition) + "r");
+			promotePosition = -1;
 			if (enableHint)
 				sendToStockfish ("stop");
 			else
@@ -739,7 +752,8 @@ namespace vkChess
 		}
 		void onPromoteToKnightClick (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/promote.crow");
-			processMove (getChessCell (Active.X, Active.Y) + getChessCell (Selection.X, Selection.Y) + "k");
+			processMove (getChessCell (Active) + getChessCell (promotePosition) + "k");
+			promotePosition = -1;
 			if (enableHint)
 				sendToStockfish ("stop");
 			else
@@ -802,6 +816,15 @@ namespace vkChess
 				NotifyValueChanged ("SampleCount", value);
 			}
 		}
+		public bool EnableReflections {
+			get => Configuration.Global.Get<bool> ("EnableReflections", false);
+			set {
+				if (value == EnableReflections)
+					return;
+				Configuration.Global.Set ("EnableReflections", value);
+				NotifyValueChanged ("EnableReflections", value);
+			}
+		}
 		public float SSRStep {
 			get => Configuration.Global.Get<float> ("SSRStep", 0.1f);
 			set {
@@ -843,47 +866,22 @@ namespace vkChess
 				updateViewRequested = true;
 			}
 		}
-		/*public float CameraY {
-			get => Configuration.Global.Get<float> ("CameraY", 0);
-			set {
-				if (value == CameraY)
-					return;
-				Configuration.Global.Set ("CameraY", value);
-				NotifyValueChanged ("CameraY", value);
-				camera.SetPosition (0, CameraY, -CameraZ);
-				updateViewRequested = true;
-			}
-		}				
-		public float CameraZ {
-			get => Configuration.Global.Get<float> ("CameraZ", 12);
-			set {
-				if (value == CameraZ)
-					return;
-				Configuration.Global.Set ("CameraZ", value);
-				NotifyValueChanged ("CameraZ", value);
-				camera.SetPosition (0, CameraY, -CameraZ);			
-				updateViewRequested = true;
-			}
-		}				
-		public float CameraAngle {
-			get => Configuration.Global.Get<float> ("CameraAngle", 0.6f);
-			set {
-				if (value == CameraAngle)
-					return;
-				Configuration.Global.Set ("CameraAngle", value);
-				NotifyValueChanged ("CameraAngle", value);
-				camera.SetRotation (CameraAngle, 0, 0);
-				updateViewRequested = true;
-			}
-		}*/				
+
+		float normalizeAngle (float a) => a - (int)(a / MathHelper.TwoPi);
 		public Vector3 CameraRotation {
 			get => ExtensionMethods.ParseVec3 (Configuration.Global.Get<string> ("CameraRotation", "<0.6,0,0>"));
 			set {
 				if (value == CameraRotation)
 					return;
-				Configuration.Global.Set ("CameraRotation", value.ToString());
-				NotifyValueChanged ("CameraRotation", value);
-				camera.SetRotation (CameraRotation.X, CameraRotation.Y, CameraRotation.Z);
+
+				Vector3 tmp = new Vector3 (
+					normalizeAngle (value.X),
+					normalizeAngle (value.Y),
+					normalizeAngle (value.Z)
+				);
+				Configuration.Global.Set ("CameraRotation", tmp.ToString());
+				NotifyValueChanged ("CameraRotation", tmp);
+				camera.SetRotation (tmp.X, tmp.Y, tmp.Z);
 				updateViewRequested = true;
 			}
 		}
@@ -897,7 +895,7 @@ namespace vkChess
 				camera.SetPosition (CameraPosition.X, CameraPosition.Y, -CameraPosition.Z);
 				updateViewRequested = true;
 			}
-		}				
+		}
 		public float CellHighlightIntensity {
 			get => Configuration.Global.Get<float> ("CellHighlightIntensity", 5.0f);
 			set {
@@ -918,6 +916,33 @@ namespace vkChess
 				updateCellHighlighting();
 			}
 		}
+		public Vector3 BlackColor {
+			get => ExtensionMethods.ParseVec3 (Configuration.Global.Get<string> ("BlackColor", "<0.03, 0.03, 0.03>"));
+			set {
+				if (value == BlackColor)
+					return;
+
+				Configuration.Global.Set ("BlackColor", value.ToString());
+				NotifyValueChanged ("BlackColor", value);
+
+				foreach	(Piece p in blackPieces)
+					p.SetColor (value);
+			}
+		}
+		public Vector3 WhiteColor {
+			get => ExtensionMethods.ParseVec3 (Configuration.Global.Get<string> ("WhiteColor", "<1, 1, 1>"));
+			set {
+				if (value == WhiteColor)
+					return;
+
+				Configuration.Global.Set ("WhiteColor", value.ToString());
+				NotifyValueChanged ("WhiteColor", value);
+
+				foreach	(Piece p in whitePieces)
+					p.SetColor (value);
+			}
+		}
+
 		#endregion
 
 		#region LOGS
@@ -925,7 +950,7 @@ namespace vkChess
 		ObservableList<LogEntry> logs = new ObservableList<LogEntry>();
 		public ObservableList<LogEntry> MainLog => logs;
 		void initLog () {
-			LogContextMenu = new CommandGroup (new Command("Clear Log", () => ResetLog()));			
+			LogContextMenu = new CommandGroup (new Command("Clear Log", () => ResetLog()));
 		}
 		public void Log(LogType type, string message) {
 			if (string.IsNullOrEmpty (message))
@@ -1028,7 +1053,7 @@ namespace vkChess
 
 				if (CurrentState >= GameState.Play)
 					startTurn ();
-			
+
 			}
 		}
 		public bool BlacksAreAI {
@@ -1036,7 +1061,7 @@ namespace vkChess
 			set {
 				if (value == BlacksAreAI)
 					return;
-			
+
 				if (CurrentState >= GameState.Play)
 					terminateCurrentGame ();
 
@@ -1045,7 +1070,7 @@ namespace vkChess
 
 				if (CurrentState >= GameState.Play)
 					startTurn ();
-			
+
 			}
 		}
 		string stockfishPositionCommand
@@ -1084,16 +1109,16 @@ namespace vkChess
 		void resync3DScene () {
 			replaySilently ();
 
-			foreach (Piece p in whites)
+			foreach (Piece p in whitePieces)
 				p.MoveTo (p.BoardCell, true);
-			foreach (Piece p in blacks)
+			foreach (Piece p in blackPieces)
 				p.MoveTo (p.BoardCell, true);
 
 			syncStockfish();
 		}
 
 		void initStockfish () {
-			if (currentState == GameState.Init) 
+			if (currentState == GameState.Init)
 				throw new Exception ("init stockfish impossible: 3d scene must be initialized first.");
 			currentState = GameState.SceneInitialized;
 
@@ -1124,12 +1149,12 @@ namespace vkChess
 			stockfish.OutputDataReceived += dataReceived;
 			stockfish.ErrorDataReceived += dataReceived;
 			stockfish.Exited += P_Exited;
-			
+
 			stockfish.Start ();
 
 			stockfish.BeginOutputReadLine ();
 			stockfish.PriorityClass = ProcessPriorityClass.BelowNormal;
-			
+
 		}
 		void syncStockfish () {
 			if (currentState < GameState.Play)
@@ -1242,8 +1267,8 @@ namespace vkChess
 		}
 
 		Piece [,] board;
-		Piece [] whites;
-		Piece [] blacks;
+		Piece [] whitePieces;
+		Piece [] blackPieces;
 		bool playerIsAi (ChessColor player) => player == ChessColor.White ? WhitesAreAI : BlacksAreAI;
 
 		volatile GameState currentState = GameState.Init;
@@ -1306,6 +1331,7 @@ namespace vkChess
 			}
 		}
 		ChessColor currentPlayer;
+		Point promotePosition = -1;
 
 		public ChessColor CurrentPlayer {
 			get => currentPlayer;
@@ -1321,10 +1347,10 @@ namespace vkChess
 			get { return CurrentPlayer == ChessColor.White ? ChessColor.Black : ChessColor.White; }
 		}
 		public Piece [] OpponentPieces {
-			get { return CurrentPlayer == ChessColor.White ? blacks : whites; }
+			get { return CurrentPlayer == ChessColor.White ? blackPieces : whitePieces; }
 		}
 		public Piece [] CurrentPlayerPieces {
-			get { return CurrentPlayer == ChessColor.White ? whites : blacks; }
+			get { return CurrentPlayer == ChessColor.White ? whitePieces : blackPieces; }
 		}
 		public int GetPawnPromotionY (ChessColor color) => color == ChessColor.White ? 7 : 0;
 
@@ -1420,7 +1446,7 @@ namespace vkChess
 			Active = -1;
 
 			board = new Piece [8, 8];
-			instanceBuff = new HostBuffer<InstanceData> (dev, VkBufferUsageFlags.VertexBuffer, 97, true, false);
+			instanceBuff = new HostBuffer<InstanceData> (dev, VkBufferUsageFlags.VertexBuffer, 98, true, false);
 			instanceBuff.SetName ("instances buff");
 
 			Piece.instanceBuff = instanceBuff;
@@ -1437,7 +1463,7 @@ namespace vkChess
 				addPiece (ChessColor.White, PieceType.Pawn, i, 1);
 			for (int i = 0; i < 8; i++)
 				addPiece (ChessColor.Black, PieceType.Pawn, i, 6);
-				
+
 			addPiece (ChessColor.White, PieceType.Bishop, 2, 0);
 			addPiece (ChessColor.White, PieceType.Bishop, 5, 0);
 			addPiece (ChessColor.Black, PieceType.Bishop, 2, 7);
@@ -1459,13 +1485,15 @@ namespace vkChess
 			addPiece (ChessColor.White, PieceType.King, 4, 0);
 			addPiece (ChessColor.Black, PieceType.King, 4, 7);
 
-			whites = board.Cast<Piece> ().Where (p => p?.Player == ChessColor.White).ToArray ();
-			blacks = board.Cast<Piece> ().Where (p => p?.Player == ChessColor.Black).ToArray ();
+			whitePieces = board.Cast<Piece> ().Where (p => p?.Player == ChessColor.White).ToArray ();
+			blackPieces = board.Cast<Piece> ().Where (p => p?.Player == ChessColor.Black).ToArray ();
 
 			Piece.boardDatas = new InstanceData [64];
 
+			Model.Node boardNode = renderer.model.FindNode ("Decorations");
+
 			uint curInstIdx = 32;
-			boardCellMesheIndices = new int [65];
+			boardCellMesheIndices = new int [64 + boardNode.Children.Count];
 
 			for (int x = 0; x < 8; x++) {
 				for (int y = 0; y < 8; y++) {
@@ -1477,9 +1505,15 @@ namespace vkChess
 					curInstIdx++;
 				}
 			}
-			boardCellMesheIndices [64] = renderer.model.Meshes.IndexOf (renderer.model.FindNode ("frame").Mesh);
-			instanceBuff.Update (96, new InstanceData (new Vector4 (1), Matrix4x4.Identity));
-			Piece.flushEnd = 97;
+			for (int i = 0; i < boardNode.Children.Count; i++) {
+				boardCellMesheIndices [64 + i] = renderer.model.Meshes.IndexOf (boardNode.Children[i].Mesh);
+				instanceBuff.Update (96 + (uint)i, new InstanceData (new Vector4 (1f), Matrix4x4.Identity));
+			}
+			/*boardCellMesheIndices [64] = renderer.model.Meshes.IndexOf (renderer.model.FindNode ("frame").Mesh);
+			instanceBuff.Update (96, new InstanceData (new Vector4 (0.2f,0.2f,0.2f,1f), Matrix4x4.Identity));
+			boardCellMesheIndices [65] = renderer.model.Meshes.IndexOf (renderer.model.FindNode ("decorations").Mesh);
+			instanceBuff.Update (97, new InstanceData (new Vector4 (1), Matrix4x4.CreateTranslation(0,0.001f,0)));*/
+			Piece.flushEnd = 96 + (uint)boardNode.Children.Count;
 
 			updateDrawCmdList ();
 			currentState = GameState.SceneInitialized;
@@ -1487,7 +1521,7 @@ namespace vkChess
 
 		void updateDrawCmdList () {
 			List<Model.InstancedCmd> primitiveCmds = new List<Model.InstancedCmd> ();
-			Piece [] pieces = whites.Concat (blacks).ToArray ();
+			Piece [] pieces = whitePieces.Concat (blackPieces).ToArray ();
 
 			uint instIdx = 0;
 			updateDrawCmdList (PieceType.Pawn, ref instIdx, ref pieces, ref primitiveCmds);
@@ -1497,7 +1531,7 @@ namespace vkChess
 			updateDrawCmdList (PieceType.Queen, ref instIdx, ref pieces, ref primitiveCmds);
 			updateDrawCmdList (PieceType.King, ref instIdx, ref pieces, ref primitiveCmds);
 
-			foreach (int i in boardCellMesheIndices) 
+			foreach (int i in boardCellMesheIndices)
 				primitiveCmds.Add (new Model.InstancedCmd { count = 1, meshIdx = i });
 
 			instancedCmds = primitiveCmds.ToArray ();
@@ -1525,11 +1559,11 @@ namespace vkChess
 			Active = -1;
 			board = new Piece [8, 8];
 
-			foreach (Piece p in whites) {
+			foreach (Piece p in whitePieces) {
 				p.Reset (animate);
 				board [p.initX, p.initY] = p;
 			}
-			foreach (Piece p in blacks) {
+			foreach (Piece p in blackPieces) {
 				p.Reset (animate);
 				board [p.initX, p.initY] = p;
 			}
@@ -1549,7 +1583,8 @@ namespace vkChess
 
 		}
 		void addPiece (ChessColor player, PieceType _type, int col, int line) {
-			Piece p = new Piece (player, _type, col, line);
+			Piece p = new Piece (player, _type, col, line,
+				player == ChessColor.White ? WhiteColor : BlackColor);
 			board [col, line] = p;
 		}
 
@@ -1798,7 +1833,7 @@ namespace vkChess
 					integrity = false;
 				}
 			}
-			foreach (Piece p in whites) {
+			foreach (Piece p in whitePieces) {
 				if (p.Captured)
 					continue;
 				if (board[p.BoardCell.X,p.BoardCell.Y] == p)
@@ -1806,7 +1841,7 @@ namespace vkChess
 				Console.WriteLine ($"incoherence for piece:{p.Player} {p.Type} has cell {p.BoardCell}");
 				integrity = false;
 			}
-			foreach (Piece p in blacks) {
+			foreach (Piece p in blackPieces) {
 				if (p.Captured)
 					continue;
 				if (board [p.BoardCell.X, p.BoardCell.Y] == p)
@@ -1849,7 +1884,7 @@ namespace vkChess
 			else
 				preview_Captured = board [pEnd.X, pEnd.Y];
 
-			if (preview_Captured != null) 
+			if (preview_Captured != null)
 				preview_Captured.Captured = true;
 
 			board [pEnd.X, pEnd.Y] = p;
@@ -1875,7 +1910,7 @@ namespace vkChess
 			preview_Move = null;
 			preview_Captured = null;
 		}
-
+		string getChessCell (Point cell) => getChessCell (cell.X, cell.Y);
 		string getChessCell (int col, int line) {
 			if (col < 0 || line < 0)
 				return null;
@@ -2036,7 +2071,7 @@ namespace vkChess
 				new BezierPath (
 				pCaptured.Position,
 				pCapLastPos, Vector3.UnitZ),animationSteps));
-			NotifyValueChanged ("board", board);				
+			NotifyValueChanged ("board", board);
 		}
 		void replaySilently () {
 			string [] moves = StockfishMoves.ToArray ();
@@ -2060,7 +2095,7 @@ namespace vkChess
 					CurrentState = GameState.Checkmate;
 					return;
 				}
-			} else if (!kingIsSafe)			
+			} else if (!kingIsSafe)
 				CurrentState = GameState.Checked;
 
 			//if (currentState != GameState.Play) {
@@ -2080,7 +2115,7 @@ namespace vkChess
 			BestMove = null;
 			CurrentState = GameState.Play;
 
-			CurrentPlayer = Opponent;			
+			CurrentPlayer = Opponent;
 			startTurn ();
 		}
 

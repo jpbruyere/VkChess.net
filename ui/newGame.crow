@@ -1,26 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Window Font="droid bold, 40" Height="50%" Width="60%" Caption="New Game">
-	<Container>
-		<VerticalStack Margin="30" Spacing="5">
-			<HorizontalStack Height="80%" Margin="3" Spacing="20">
-				<Border Width="50%" Margin="5" CornerRadius="5" Focusable="true" Background="DimGrey"
-					MouseEnter="{Background=SteelBlue}"
-					MouseLeave="{Background=DimGrey}"
-					MouseClick="onNewWhiteGame">
+	<VerticalStack Margin="30" Spacing="5">
+		<HorizontalStack Margin="0" Spacing="0">
+			<Container Width="50%" Margin="20">
+				<Border Style="chessPceButton" MouseClick="onNewWhiteGame">
 					<Image Margin="5"
-						Path="data/Pieces.svg" SvgSub="wp"/>
+						Path="data/Pieces.svg" SvgSub="wK"/>
 				</Border>
-				<Border Width="50%" Margin="5" CornerRadius="5" Focusable="true" Background="DimGrey"
-					MouseEnter="{Background=SteelBlue}"
-					MouseLeave="{Background=DimGrey}"
-					MouseClick="onNewBlackGame">
+			</Container>
+			<Container Width="50%" Margin="20">
+				<Border Style="chessPceButton" MouseClick="onNewBlackGame">
 					<Image Margin="5"
-						Path="data/Pieces.svg" SvgSub="bp"/>
+						Path="data/Pieces.svg" SvgSub="bK"/>
 				</Border>
-			</HorizontalStack>
-			<Button Height="Fit" Width="40%" Style="#Chess.gui.Button.style" HorizontalAlignment="Right" Caption="Cancel"
-				MouseClick="../../../butQuitPress"/>
-		</VerticalStack>
-	</Container>
+			</Container>
+		</HorizontalStack>
+	</VerticalStack>
 </Window>
 

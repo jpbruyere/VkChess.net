@@ -24,8 +24,8 @@ namespace vkChess {
 
 	[DebuggerDisplay("{DebuggerDisplay}")]
 	public class Piece {
-		static Vector4 blackColor = new Vector4(0.03f, 0.03f, 0.03f, 1f);
-		static Vector4 whiteColor = new Vector4(1.0f, 1.0f, 1.0f, 1f);
+		public static Vector4 blackColor = new Vector4(0.03f, 0.03f, 0.03f, 1f);
+		public static Vector4 whiteColor = new Vector4(1.0f, 1.0f, 1.0f, 1f);
 		public static HostBuffer<VkChess.InstanceData> instanceBuff;
 		public static VkChess.InstanceData[] boardDatas;
 		public static uint flushStart, flushEnd;
@@ -40,13 +40,13 @@ namespace vkChess {
 		public bool IsPromoted;
 		public bool HasMoved;
 		public bool Captured {
-			get { return BoardCell < 0; }
+			get => BoardCell < 0;
 			set {
 				if (value)
 					BoardCell = -1;
 				else
 					BoardCell = 0;
-			} 
+			}
 		}
 		public void SetCaptured (Vector3 capturePos) {
 			Captured = true;
@@ -59,7 +59,7 @@ namespace vkChess {
 
 		VkChess.InstanceData instData;
 
-		public Piece (ChessColor player, PieceType type, int col, int line) {
+		public Piece (ChessColor player, PieceType type, int col, int line, Vector3 color) {
 			this.instanceIdx = nextInstanceIdx++;
 			this.Type = type;
 			this.Player = player;
@@ -69,7 +69,7 @@ namespace vkChess {
 			position.Y = initY;
 			BoardCell = new Crow.Point (col, line);
 
-			instData = new VkChess.InstanceData(Player == ChessColor.White ? whiteColor : blackColor, Matrix4x4.Identity);
+			instData = new VkChess.InstanceData(new Vector4 (color, 1), Matrix4x4.Identity);
 
 			if (player == ChessColor.Black && type == PieceType.Knight)
 				zAngle = MathHelper.Pi;
@@ -155,6 +155,10 @@ namespace vkChess {
 			else if (flushEnd <= instIdx)
 				flushEnd = instIdx + 1;
 		}
+		public void SetColor (Vector3 newColor) {
+			instData.color = new Vector4 (newColor, 1);
+			UpdateBuff (instanceIdx, ref instData);
+		}
 		public static void UpdateCase (int x, int y, Vector4 colorDiff) {
 			int index = y * 8 + x;
 			boardDatas[index].color += colorDiff;
@@ -179,7 +183,7 @@ namespace vkChess {
 			if (IsPromoted)
 				Unpromote();
 			IsPromoted = false;
-			HasMoved = false;            
+			HasMoved = false;
 			BoardCell = new Crow.Point (initX, initY);
 		}
 		public void MoveTo (Crow.Point newPos, bool animate = false) {
@@ -219,6 +223,9 @@ namespace vkChess {
 				case 'k':
 					Type = PieceType.Knight;
 					break;
+				case 'n':
+					IsPromoted = false;
+					return;
 				default:
 					throw new Exception("Unrecognized promotion");
 			}

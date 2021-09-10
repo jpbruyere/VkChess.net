@@ -21,7 +21,7 @@ namespace vkChess {
 		public static uint SHADOWMAP_SIZE = 4096;
 		public static VkFormat SHADOWMAP_FORMAT = VkFormat.D32SfloatS8Uint;
 		public static VkSampleCountFlags SHADOWMAP_NUM_SAMPLES = VkSampleCountFlags.SampleCount1;
-		public bool updateShadowMap = true;
+		public bool updateShadowMap = true, updateLightMatricesRequested = true;
 
 		public float depthBiasConstant = 1.5f;
 		public float depthBiasSlope = 1.75f;
@@ -125,9 +125,11 @@ namespace vkChess {
 			renderer.uboLights.Update (renderer.lights);
 			dev.WaitIdle ();
 		}
-
 		public void update_shadow_map (CommandPool cmdPool, vke.Buffer instanceBuf, params Model.InstancedCmd[] instances) {
-            update_light_matrices ();
+			if (updateLightMatricesRequested) {
+            	update_light_matrices ();
+				updateLightMatricesRequested = false;
+			}
 
 			PrimaryCommandBuffer cmd = cmdPool.AllocateAndStart ();
 
@@ -146,10 +148,9 @@ namespace vkChess {
                 renderer.model.Bind(cmd);
                 renderer.model.Draw(cmd, shadowPipeline.Layout, instanceBuf, true, instances);
             }
-
 			shadowPass.End (cmd);
-
 			renderer.presentQueue.EndSubmitAndWait (cmd);
+
 			updateShadowMap = false;
 		}
 

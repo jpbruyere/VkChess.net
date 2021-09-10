@@ -8,13 +8,12 @@
 		<ItemTemplate DataType="Crow.CommandGroup" >
 			<MenuItem Data="{Commands}" Width="Fit" Height="Stretched" IsEnabled="{CanExecute}"
 					Template="ui/menuItem.template"
-					ItemTemplate="ui/menuItem.itmp">			
+					ItemTemplate="ui/menuItem.itmp">
 			</MenuItem>
-		</ItemTemplate>		
+		</ItemTemplate>
 	</Menu>
 	<CheckBox Caption="Hint" IsChecked="{²EnableHint}" Height="Stretched"
 			Background="Transparent" Foreground="White"
-			Checked="{Background=${ControlHighlight}}"
 			Unchecked = "{Background=Transparent}"/>
 	<Widget Width="Stretched"/>
 	<VerticalStack Style="hsStatus">

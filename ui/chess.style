@@ -32,30 +32,30 @@ labStatus2 {
 	Background="DarkGrey";
 	Font="serif bold, 16";
 	Margin="0";
-	TextAlignment="Center"; 
+	TextAlignment="Center";
 }
 
 CheckBox {
 	Template = "ui/checkBox.tmp";
-	MinimumSize = "80, 30";	
+	MinimumSize = "80, 30";
 	Width="Fit";
 	Height= "Fit";
 	Background="${StateCtrlInactiveBackground}";
 	Checked="{Background=${ControlHighlight}}";
-	Unchecked = "{Background=${StateCtrlInactiveBackground}}";	
+	Unchecked = "{Background=${StateCtrlInactiveBackground}}";
 }
 RadioButton {
 	Template = "ui/checkBox.tmp";
-	MinimumSize = "80, 30";	
+	MinimumSize = "80, 30";
 	Width="Fit";
 	Height= "Fit";
 	Background="${StateCtrlInactiveBackground}";
 	Checked="{Background=${ControlHighlight}}";
-	Unchecked = "{Background=${StateCtrlInactiveBackground}}";	
+	Unchecked = "{Background=${StateCtrlInactiveBackground}}";
 }
-Button {	
+Button {
 	Template = "ui/Button.tmp";
-	MinimumSize = "80, 30";	
+	MinimumSize = "80, 30";
 	Width="Fit";
 }
 MenuItem {
@@ -98,11 +98,11 @@ labValue {
 	Width="Stretched";
 }
 labColor {
-	Margin="2";	
+	Margin="2";
 	Width="Fit";
 }
 labColorV {
-	Margin="1";		
+	Margin="1";
 	Width="Fit";
 }
 ColorSlider {
@@ -123,4 +123,17 @@ Vector3Widget {
 winBorder {
 	StickyMouseEnabled="true";
 	StickyMouse="10";
+}
+
+chessPceButtonMargin = "5";
+chessPceButtonImageMargin = "2";
+
+chessPceButton {
+	Width="Stretched";
+	Margin="5";
+	CornerRadius="5";
+	Focusable="true";
+	Background="${StateCtrlInactiveBackground}";
+	MouseEnter="{Background=${ControlHighlight}}";
+	MouseLeave="{Background=${StateCtrlInactiveBackground}}";
 }
