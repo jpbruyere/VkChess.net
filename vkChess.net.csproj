@@ -18,11 +18,11 @@
 		<EmbeddedResource Include="ui\*.style" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="VkCrowWindow" Version="0.3.4-beta" />
-		<PackageReference Include="vke" Version="0.2.4-beta" />
+		<PackageReference Include="VkCrowWindow" Version="0.3.5-beta" />
+		<PackageReference Include="vke" Version="0.2.1-beta" />
 		<PackageReference Include="SpirVTasks" Version="0.1.44" />
-		<PackageReference Include="vke.EnvironmentPipeline" Version="0.2.0-beta" />
-		<PackageReference Include="vke.gltfLoader" Version="0.2.0-beta" />
+		<PackageReference Include="vke.EnvironmentPipeline" Version="0.2.1-beta" />
+		<PackageReference Include="vke.gltfLoader" Version="0.2.1-beta" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="src\**\*.cs" />
