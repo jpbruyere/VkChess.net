@@ -16,9 +16,9 @@
 			Background="Transparent" Foreground="White"
 			Unchecked = "{Background=Transparent}"/>
 	<Widget Width="Stretched"/>
-	<VerticalStack Style="hsStatus">
+	<VerticalStack Style="hsStatus" Width="160">
 		<Label Style="labStatus" Text="State:" />
-		<Label Style="labStatus2" Text="{CurrentState}" />
+		<Label Style="labStatus2" Text="{CurrentState}" Background="{CurrentStateColor}"/>
 	</VerticalStack>
 	<VerticalStack Style="hsStatus">
 		<Label Style="labStatus" Text="Hover:" />

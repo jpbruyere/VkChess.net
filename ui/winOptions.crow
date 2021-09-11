@@ -12,7 +12,7 @@
 			</HorizontalStack>
 		</VerticalStack>
 		<!--<HorizontalStack Height="Fit">-->
-		<Expandable Caption="Game" IsExpanded="false">
+		<Expandable Caption="Game" IsExpanded="{²OptGameIsExpanded}">
 			<VerticalStack Height="Fit" Spacing="3" Margin="10">
 				<HorizontalStack Height="Fit">
 					<Label Width="Stretched" Text="Whites Level:"/>
@@ -50,7 +50,7 @@
 				</HorizontalStack>
 			</VerticalStack>
 		</HorizontalStack>-->
-		<Expandable Caption="Camera" IsExpanded="false">
+		<Expandable Caption="Camera" IsExpanded="{²OptCameraIsExpanded}">
 			<VerticalStack Height="Fit" Margin="10">
 				<Vector3Widget Caption="Rotation" Value="{²CameraRotation}" SmallIncrement="0.01" LargeIncrement="0.1" Minimum="-7.0" Maximum="7.0" Decimals="2"/>
 				<Vector3Widget Caption="Position" Value="{²CameraPosition}" SmallIncrement="0.1" LargeIncrement="1.0" Minimum="-20.0" Maximum="20.0" Decimals="1"/>
@@ -60,7 +60,7 @@
 				</HorizontalStack>
 			</VerticalStack>
 		</Expandable>
-		<Expandable Caption="Rendering" IsExpanded="false">
+		<Expandable Caption="Rendering" IsExpanded="{²OptRenderingIsExpanded}">
 			<VerticalStack Height="Fit" Margin="10">
 				<HorizontalStack Style="Slid" >
 					<Label Text="Exposure:" Width="100"/>
@@ -75,7 +75,7 @@
 					<Slider Style="LightingSlider" Value="{²IBLAmbient}" Maximum="50.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
 				</HorizontalStack>
 				<CheckBox Caption="Enable Reflections" IsChecked="{²EnableReflections}" />
-				<EnumSelector Caption="Sample count" EnumValue="{²SampleCount}" Height="Fit" Width="Stretched">
+				<EnumSelector Caption="Sample count" ForceRadioButton="true" BitFieldExcludeMask="{AvailableSampleCount}" EnumValue="{²SampleCount}" Height="Fit" Width="Stretched">
 					<Template>
 						<GroupBox Caption="{./Caption}" CornerRadius="{./CornerRadius}" Foreground="{./Foreground}" Background="{./Background}">
 							<Wrapper Margin="5" Orientation="Vertical" Height="Fit" Width="Stretched" Name="Content"/>
@@ -84,7 +84,7 @@
 				</EnumSelector>
 			</VerticalStack>
 		</Expandable>
-		<Expandable Caption="Colors" IsExpanded="false">
+		<Expandable Caption="Colors" IsExpanded="{²OptColorIsExpanded}">
 			<VerticalStack Height="Fit" Margin="10">
 				<Vector3Widget Caption="Black color" Value="{²BlackColor}" SmallIncrement="0.01" LargeIncrement="0.1" Maximum="1.0" Decimals="2"/>
 				<Vector3Widget Caption="White color" Value="{²WhiteColor}" SmallIncrement="0.01" LargeIncrement="0.1" Maximum="1.0" Decimals="2"/>

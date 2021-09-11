@@ -213,7 +213,8 @@ namespace vkChess
 			init_renderpass ();
 
 			descLayoutMain = new DescriptorSetLayout (dev,
-				new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Vertex | VkShaderStageFlags.Fragment, VkDescriptorType.UniformBuffer),//matrices and params
+				new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Vertex | VkShaderStageFlags.Fragment |
+						VkShaderStageFlags.TessellationControl | VkShaderStageFlags.TessellationEvaluation, VkDescriptorType.UniformBuffer),//matrices and params
 				new VkDescriptorSetLayoutBinding (1, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//irradiance
 				new VkDescriptorSetLayoutBinding (2, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//prefil
 				new VkDescriptorSetLayoutBinding (3, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),//lut brdf
@@ -265,9 +266,16 @@ namespace vkChess
 							new SpecializationConstant<float> (0, nearPlane),
 							new SpecializationConstant<float> (1, farPlane),
 							new SpecializationConstant<int> (2, MAX_MATERIAL_COUNT))) {
+					cfg.inputAssemblyState.topology = VkPrimitiveTopology.PatchList;
+
+					cfg.AddShader (dev, VkShaderStageFlags.TessellationControl, "#vkChess.net.pntriangles.tesc.spv");
+					cfg.AddShader (dev, VkShaderStageFlags.TessellationEvaluation, "#vkChess.net.pntriangles.tese.spv");
 					cfg.AddShader (dev, VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbrInstanced.vert.spv");
 
+					cfg.TessellationPatchControlPoints = 3;
+
 					cfg.SubpassIndex = SP_DEPTH_PREPASS;
+
 					depthPrepassPipeline = new GraphicPipeline (cfg, "Depth prepass");
 
 					cfg.depthStencilState.depthCompareOp = VkCompareOp.Equal;
@@ -276,11 +284,12 @@ namespace vkChess
 					cfg.blendAttachments.Add (new VkPipelineColorBlendAttachmentState (false));
 
 					cfg.SubpassIndex = SP_MODELS;
-
 					cfg.AddShader (dev, VkShaderStageFlags.Fragment, "#vkChess.net.GBuffPbrTexArray.frag.spv", constants);
+
 
 					gBuffPipeline = new GraphicPipeline (cfg, "GBuff");
 				}
+				cfg.inputAssemblyState.topology = VkPrimitiveTopology.TriangleList;
 				cfg.rasterizationState.cullMode = VkCullModeFlags.Front;
 				//COMPOSE PIPELINE
 				cfg.blendAttachments.Clear ();

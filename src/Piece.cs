@@ -80,7 +80,7 @@ namespace vkChess {
 		public Crow.Point BoardCell;
 
 		public Vector3 Position {
-			get { return position; }
+			get => position;
 			set {
 				if (value == position)
 					return;
@@ -90,7 +90,7 @@ namespace vkChess {
 		}
 
 		public float X {
-			get { return position.X; }
+			get => position.X;
 			set {
 				if (position.X == value)
 					return;
@@ -99,7 +99,7 @@ namespace vkChess {
 			}
 		}
 		public float Y {
-			get { return position.Y; }
+			get => position.Y;
 			set {
 				if (position.Y == value)
 					return;
@@ -108,7 +108,7 @@ namespace vkChess {
 			}
 		}
 		public float Z {
-			get { return position.Z; }
+			get => position.Z;
 			set {
 				if (position.Z == value)
 					return;
@@ -117,7 +117,7 @@ namespace vkChess {
 			}
 		}
 		public float XAngle {
-			get { return xAngle; }
+			get => xAngle;
 			set {
 				if (xAngle == value)
 					return;
@@ -126,7 +126,7 @@ namespace vkChess {
 			}
 		}
 		public float ZAngle {
-			get { return zAngle; }
+			get => zAngle;
 			set {
 				if (zAngle == value)
 					return;

@@ -1,33 +1,16 @@
-﻿//
-//  FloatAnimation.cs
+﻿// Copyright (c) 2015-2021  Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
 //
-//  Author:
-//       Jean-Philippe Bruyère <jp.bruyere@hotmail.com>
-//
-//  Copyright (c) 2015 jp
-//
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 using System;
 using System.Numerics;
 
 namespace vke
 {
 	public class PathAnimation : Animation<Vector3>
-	{		
+	{
 		Path path;
-		int stepCount;
-		int currentStep;
+		int stepCount, currentStep;
 
 		#region CTOR
 		public PathAnimation(Object instance, string _propertyName, Path _path, int _stepCount = 20)
@@ -39,17 +22,24 @@ namespace vke
 
 		#endregion
 
+		bool smooth = true;
+
+		float smoothedStep (float step) => (-MathF.Cos (step * MathF.PI) + 1)/2.0f;
+
 		public override void Process()
 		{
 			currentStep++;
 
 			float t = (float)currentStep / (float)stepCount;
+			if (smooth)
+				t = smoothedStep (t);
+
 			Vector3 pos = path.GetStep (t);
 			setValue(pos);
 
 			if (currentStep < stepCount)
 				return;
-			
+
 			AnimationList.Remove(this);
 			RaiseAnimationFinishedEvent ();
 		}

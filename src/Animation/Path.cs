@@ -1,4 +1,7 @@
-﻿using System.Numerics;
+﻿// Copyright (c) 2015-2021  Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+using System.Numerics;
 
 namespace vke {
     public class Path 

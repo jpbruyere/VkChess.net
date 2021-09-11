@@ -10,6 +10,8 @@ using vke.glTF;
 using Glfw;
 using Vulkan;
 using System.Reflection;
+using System.Net;
+using System.Runtime.InteropServices;
 
 namespace vkChess
 {
@@ -50,6 +52,24 @@ namespace vkChess
 			using (VkChess app = new VkChess ())
 				app.Run ();
 		}
+
+		public CommandGroup Commands => new CommandGroup (
+			new CommandGroup ("Menu",
+				new Command ("New Game", () => loadWindow ("ui/newGame.crow", this)),
+				new Command ("Save", () => loadWindow ("ui/newGame.crow", this)),
+				new Command ("Load", () => loadWindow ("ui/newGame.crow", this)),
+				new Command ("Options", () => loadWindow ("ui/winOptions.crow", this)),
+				new Command ("Moves", () => loadWindow ("ui/winMoves.crow", this)),
+#if DEBUG
+				new Command ("Log", () => loadWindow ("ui/winLog.crow", this)),
+#endif
+				new Command ("Quit", () => Close())
+			),
+			new Command ("Undo", () => undo())
+			//new Command ("Redo", () => Close())
+		);
+
+
 		public override string [] EnabledInstanceExtensions => new string [] {
 #if DEBUG
 			//Ext.I.VK_EXT_debug_utils,
@@ -70,7 +90,9 @@ namespace vkChess
 #if PIPELINE_STATS
 			enabled_features.pipelineStatisticsQuery = available_features.pipelineStatisticsQuery;
 #endif
+			enabled_features.tessellationShader = available_features.tessellationShader;
 		}
+
 #if PIPELINE_STATS
 		PipelineStatisticsQueryPool statPool;
 		TimestampQueryPool timestampQPool;
@@ -84,19 +106,106 @@ namespace vkChess
 #if DEBUG
 		//vke.DebugUtils.Messenger dbgmsg;
 #endif
+
+		Queue transferQ;
+		GraphicPipeline plToneMap;
+		DescriptorSetLayout dslToneMap;
+		bool updateRendererDescriptors;
+		public VkSampleCountFlags AvailableSampleCount => ~phy.Limits.framebufferColorSampleCounts;
+		public VkSampleCountFlags maxSampleCount {
+			get {
+				int sampleMask = (int)phy.Limits.framebufferColorSampleCounts;
+				for (int i = 6; i > 0; i--)
+					if ((sampleMask >> i) > 0)
+						return (VkSampleCountFlags)Math.Pow(2, i);
+				return VkSampleCountFlags.SampleCount1;
+			}
+		}
+		protected override void createQueues () {
+			base.createQueues ();
+			transferQ = new Queue (dev, VkQueueFlags.Transfer);
+		}
+		protected override void initVulkan () {
+			initLog ();
+
+			base.initVulkan ();
+
+			iFace.SetWindowIcon ("#Crow.Icons.crow.png");
+
+			VkSampleCountFlags maxSamples = maxSampleCount;
+			if (SampleCount > maxSamples)
+				SampleCount = maxSamples;
+			DeferredPbrRendererBase.NUM_SAMPLES =  SampleCount;
+
+#if DEBUG
+			/*dbgmsg = new vke.DebugUtils.Messenger (instance, VkDebugUtilsMessageTypeFlagsEXT.PerformanceEXT | VkDebugUtilsMessageTypeFlagsEXT.ValidationEXT | VkDebugUtilsMessageTypeFlagsEXT.GeneralEXT,
+				VkDebugUtilsMessageSeverityFlagsEXT.InfoEXT |
+				VkDebugUtilsMessageSeverityFlagsEXT.WarningEXT |
+				VkDebugUtilsMessageSeverityFlagsEXT.ErrorEXT |
+				VkDebugUtilsMessageSeverityFlagsEXT.VerboseEXT);*/
+#endif
+#if PIPELINE_STATS
+			statPool = new PipelineStatisticsQueryPool (dev,
+				VkQueryPipelineStatisticFlags.InputAssemblyVertices |
+				VkQueryPipelineStatisticFlags.InputAssemblyPrimitives |
+				VkQueryPipelineStatisticFlags.ClippingInvocations |
+				VkQueryPipelineStatisticFlags.ClippingPrimitives |
+				VkQueryPipelineStatisticFlags.FragmentShaderInvocations);
+
+			timestampQPool = new TimestampQueryPool (dev);
+#endif
+
+			cmds = cmdPool.AllocateCommandBuffer (swapChain.ImageCount);
+
+			createCamera ();
+
+			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [0], camera.NearPlane, camera.FarPlane);
+
+			renderer.matrices.scaleIBLAmbient = IBLAmbient;
+			renderer.lights[0].color = new Vector4 (LightStrength);
+			renderer.LoadModel (transferQ, "data/models/chess.glb");
+			//renderer.LoadModel (transferQ, "/mnt/devel/vkChess.net/data/models/chess3.glb");
+			// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
+
+			if (EnableReflections) {
+				DescriptorSetWrites dsw = new DescriptorSetWrites (descriptorSet,
+					dslToneMap.Bindings[4]);
+				dsw.Write (dev, renderer.uboMatrices.Descriptor);
+			}
+
+			UpdateFrequency = 5;
+
+			curRenderer = renderer;
+
+			updateCellHighlighting();
+
+			initBoard ();
+			initStockfish ();
+
+			iFace.Load ("ui/chess.crow").DataSource = this;
+
+			loadCurrentGame ();
+		}
+		void createCamera () {
+			camera = new Camera (Utils.DegreesToRadians (CameraFOV), 1f, 0.1f, 32f);
+			camera.SetPosition (CameraPosition.X, CameraPosition.Y, -CameraPosition.Z);
+			camera.SetRotation (CameraRotation.X, CameraRotation.Y, CameraRotation.Z);
+			camera.AspectRatio = Width / Height;
+			camera.Model = Matrix4x4.CreateScale (0.5f);
+		}
+
+		#region VKCrowWindow pipeline overrides
 		protected override void CreateRenderPass () {
 			renderPass = new RenderPass (dev, swapChain.ColorFormat, DeferredPbrRendererBase.NUM_SAMPLES);
 		}
-		GraphicPipeline plToneMap;
-		DescriptorSetLayout dslToneMap;
-		protected override void CreateDescriptors () {
-			dsPool = EnableReflections ?
+		protected override void CreateAndAllocateDescriptors () {
+			descriptorPool = EnableReflections ?
 				new DescriptorPool (dev, 1,
 					new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 4),
 					new VkDescriptorPoolSize (VkDescriptorType.UniformBuffer, 1)) :
 				new DescriptorPool (dev, 1,
 					new VkDescriptorPoolSize (VkDescriptorType.CombinedImageSampler, 2));
-			descSet = dsPool.Allocate (dslToneMap);
+			descriptorSet = descriptorPool.Allocate (dslToneMap);
 		}
 		protected override void CreatePipeline () {
 			using (GraphicPipelineConfig cfg = GraphicPipelineConfig.CreateDefault (VkPrimitiveTopology.TriangleList, DeferredPbrRendererBase.NUM_SAMPLES)) {
@@ -132,7 +241,22 @@ namespace vkChess
 
 			}
 		}
-		protected override void recordUICmd (PrimaryCommandBuffer cmd, int imageIndex) {
+		protected override void buildCommandBuffer (PrimaryCommandBuffer cmd, int imageIndex) {
+			if (updateRendererDescriptors) {
+				if (EnableReflections) {
+					DescriptorSetWrites dsw = new DescriptorSetWrites (descriptorSet,
+						dslToneMap.Bindings[1], dslToneMap.Bindings[2], dslToneMap.Bindings[3]);
+					dsw.Write (dev, renderer.HDROutput.Descriptor, renderer.GBuffPosDepthOutput.Descriptor, renderer.GBuffN_AO.Descriptor);
+				} else {
+					DescriptorSetWrites dsw = new DescriptorSetWrites (descriptorSet,	dslToneMap.Bindings[1]);
+					dsw.Write (dev, renderer.HDROutput.Descriptor);
+				}
+				updateRendererDescriptors = false;
+			}
+
+			renderer?.recordDraw (cmd, imageIndex, instanceBuff, instancedCmds?.ToArray ());
+
+
 			renderPass.Begin(cmd, frameBuffers[imageIndex]);
 
 			cmd.SetViewport (frameBuffers[imageIndex].Width, frameBuffers[imageIndex].Height);
@@ -144,81 +268,14 @@ namespace vkChess
 			} else
 				cmd.PushConstant (plToneMap.Layout, VkShaderStageFlags.Fragment, 16, new float[] { Exposure, Gamma}, 0);
 
-			plToneMap.BindDescriptorSet (cmd, descSet);
+			plToneMap.BindDescriptorSet (cmd, descriptorSet);
 			plToneMap.Bind (cmd);
 			cmd.Draw (3, 1, 0, 0);
 
 			renderPass.End (cmd);
 		}
-		protected override void initVulkan () {
-			DeferredPbrRendererBase.NUM_SAMPLES =  SampleCount;
+		#endregion
 
-			initLog ();
-
-			base.initVulkan ();
-
-#if DEBUG
-			/*dbgmsg = new vke.DebugUtils.Messenger (instance, VkDebugUtilsMessageTypeFlagsEXT.PerformanceEXT | VkDebugUtilsMessageTypeFlagsEXT.ValidationEXT | VkDebugUtilsMessageTypeFlagsEXT.GeneralEXT,
-				VkDebugUtilsMessageSeverityFlagsEXT.InfoEXT |
-				VkDebugUtilsMessageSeverityFlagsEXT.WarningEXT |
-				VkDebugUtilsMessageSeverityFlagsEXT.ErrorEXT |
-				VkDebugUtilsMessageSeverityFlagsEXT.VerboseEXT);*/
-#endif
-#if PIPELINE_STATS
-			statPool = new PipelineStatisticsQueryPool (dev,
-				VkQueryPipelineStatisticFlags.InputAssemblyVertices |
-				VkQueryPipelineStatisticFlags.InputAssemblyPrimitives |
-				VkQueryPipelineStatisticFlags.ClippingInvocations |
-				VkQueryPipelineStatisticFlags.ClippingPrimitives |
-				VkQueryPipelineStatisticFlags.FragmentShaderInvocations);
-
-			timestampQPool = new TimestampQueryPool (dev);
-#endif
-			//Configuration.Global.Set ("StockfishPath", "/usr/games/stockfish");
-
-			cmds = cmdPool.AllocateCommandBuffer (swapChain.ImageCount);
-
-			createCamera ();
-
-			renderer = new DeferredPbrRenderer (dev, swapChain, presentQueue, cubemapPathes [0], camera.NearPlane, camera.FarPlane);
-
-			renderer.matrices.scaleIBLAmbient = IBLAmbient;
-			renderer.lights[0].color = new Vector4 (LightStrength);
-			renderer.LoadModel (transferQ, "data/models/chess.glb");
-			//renderer.LoadModel (transferQ, "/mnt/devel/vkChess.net/data/models/chess3.glb");
-			// Matrix4x4.CreateScale(1f / Math.Max(Math.Max(renderer.modelAABB.Width, renderer.modelAABB.Height), renderer.modelAABB.Depth));
-
-			if (EnableReflections) {
-				DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,
-					dslToneMap.Bindings[4]);
-				dsw.Write (dev, renderer.uboMatrices.Descriptor);
-			}
-
-			UpdateFrequency = 5;
-
-			curRenderer = renderer;
-
-			updateCellHighlighting();
-
-			initBoard ();
-			initStockfish ();
-
-			iFace.Load ("ui/chess.crow").DataSource = this;
-
-			loadCurrentGame ();
-		}
-		void createCamera () {
-			camera = new Camera (Utils.DegreesToRadians (CameraFOV), 1f, 0.1f, 32f);
-			camera.SetPosition (CameraPosition.X, CameraPosition.Y, -CameraPosition.Z);
-			camera.SetRotation (CameraRotation.X, CameraRotation.Y, CameraRotation.Z);
-			camera.AspectRatio = Width / Height;
-			camera.Model = Matrix4x4.CreateScale (0.5f);
-		}
-		Queue transferQ;
-		protected override void createQueues () {
-			base.createQueues ();
-			transferQ = new Queue (dev, VkQueueFlags.Transfer);
-		}
 
 		string [] cubemapPathes = {
 			"data/textures/papermill.ktx",
@@ -258,27 +315,6 @@ namespace vkChess
 		public PbrModelTexArray.Material[] Materials =>
 			(renderer.model as PbrModelTexArray).materials;
 
-
-		void buildCommandBuffers () {
-			dev.WaitIdle ();
-
-			cmdPool.Reset (); //VkCommandPoolResetFlags.ReleaseResources);
-
-			for (int i = 0; i < swapChain.ImageCount; ++i) {
-				cmds [i].Start ();
-#if PIPELINE_STATS
-				statPool.Begin (cmds[i]);
-				renderer.recordDraw (cmds[i], i, instanceBuff, instancedCmds?.ToArray ());
-				statPool.End (cmds[i]);
-#else
-				renderer?.recordDraw (cmds [i], i, instanceBuff, instancedCmds?.ToArray ());
-
-				recordUICmd (cmds[i], i);
-#endif
-				cmds [i].End ();
-			}
-		}
-
 		public override void UpdateView () {
 			dev.WaitIdle ();
 			if (updateViewRequested) {
@@ -295,7 +331,6 @@ namespace vkChess
 		uint fpsAccum, fpsAccumCpt;
 
 		const int fpsAccumLimit = 20;
-
 
 		public override void Update () {
 			base.Update ();
@@ -342,19 +377,11 @@ namespace vkChess
 		}
 
 		protected override void OnResize () {
-			base.OnResize ();
 			renderer.Resize ();
 
-			if (EnableReflections) {
-				DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,
-					dslToneMap.Bindings[1], dslToneMap.Bindings[2], dslToneMap.Bindings[3]);
-				dsw.Write (dev, renderer.HDROutput.Descriptor, renderer.GBuffPosDepthOutput.Descriptor, renderer.GBuffN_AO.Descriptor);
-			} else {
-				DescriptorSetWrites dsw = new DescriptorSetWrites (descSet,	dslToneMap.Bindings[1]);
-				dsw.Write (dev, renderer.HDROutput.Descriptor);
-			}
+			updateRendererDescriptors = true;
+			base.OnResize ();
 
-			buildCommandBuffers ();
 			updateViewRequested = true;
 		}
 
@@ -412,9 +439,7 @@ namespace vkChess
 			CameraPosition = new Vector3 (camera.Position.X, camera.Position.Y, -camera.Position.Z);
 		}
 		protected override void onMouseMove (double xPos, double yPos) {
-			base.onMouseMove (xPos, yPos);
-
-			if (MouseIsInInterface)
+			if (iFace.OnMouseMove ((int)xPos, (int)yPos))
 				return;
 
 			double diffX = lastMouseX - xPos;
@@ -454,9 +479,9 @@ namespace vkChess
 			NotifyValueChanged ("DebugCurCellPos", p?.BoardCell);
 
 			if (p != null) {
-				NotifyValueChanged ("DebugCurCell", getChessCell (p.BoardCell.X, p.BoardCell.Y));
+				NotifyValueChanged ("DebugCurCell", (object)getChessCell (p.BoardCell.X, p.BoardCell.Y));
 			}else
-				NotifyValueChanged ("DebugCurCell", "");
+				NotifyValueChanged ("DebugCurCell", (object)"");
 		}
 		protected override void onMouseButtonDown (MouseButton button) {
 			base.onMouseButtonDown (button);
@@ -619,13 +644,15 @@ namespace vkChess
 				EnableHint = false;
 
 				//if (currentState != GameState.Pad && currentState != GameState.Checkmate && !playerIsAi (CurrentPlayer) && playerIsAi (Opponent))//undo ai move
-				if (!playerIsAi (CurrentPlayer) && playerIsAi (Opponent))
+				if (currentState < GameState.Pad || (!playerIsAi (CurrentPlayer) && playerIsAi (Opponent)))
 					undoLastMove ();
 
 				undoLastMove ();
 
 				startTurn ();
 				NotifyValueChanged ("board", board);
+				NotifyValueChanged ("CurrentState", currentState);
+				NotifyValueChanged ("CurrentStateColor", CurrentStateColor);
 
 				EnableHint = hintIsEnabled;
 			}
@@ -645,20 +672,6 @@ namespace vkChess
 					};
 		}
 
-		public CommandGroup Commands => new CommandGroup (
-			new CommandGroup ("Menu",
-				new Command ("New Game", () => loadWindow ("ui/newGame.crow", this)),
-				new Command ("Save", () => loadWindow ("ui/newGame.crow", this)),
-				new Command ("Load", () => loadWindow ("ui/newGame.crow", this)),
-				new Command ("Options", () => loadWindow ("ui/winOptions.crow", this)),
-#if DEBUG
-				new Command ("Log", () => loadWindow ("ui/winLog.crow", this)),
-#endif
-				new Command ("Quit", () => Close())
-			),
-			new Command ("Undo", () => undo())
-			//new Command ("Redo", () => Close())
-		);
 		void terminateCurrentGame () {
 			if (CurrentState < GameState.Play)
 				return;
@@ -670,10 +683,6 @@ namespace vkChess
 				while (searchStopRequested)
                     System.Threading.Thread.Sleep (10);
 			}
-		}
-		public float CameraAngleY {
-			get => CameraRotation.Y;
-			set => CameraRotation = new Vector3(CameraRotation.X, value, CameraRotation.Z);
 		}
 		void onNewWhiteGame (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/newGame.crow");
@@ -696,7 +705,7 @@ namespace vkChess
 			if (enableHint)
 				sendToStockfish ("go infinite");
 
-			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", 0, 0.15f));
+			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", 0, 50));
 		}
 		void onNewBlackGame (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/newGame.crow");
@@ -721,7 +730,7 @@ namespace vkChess
 			else
 				sendToStockfish ("go depth 1");
 
-			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", MathHelper.Pi, 0.15f));
+			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", MathHelper.Pi, 50));
 		}
 		void onPromoteToQueenClick (object sender, MouseButtonEventArgs e) {
 			closeWindow ("ui/promote.crow");
@@ -867,7 +876,6 @@ namespace vkChess
 			}
 		}
 
-		float normalizeAngle (float a) => a - (int)(a / MathHelper.TwoPi);
 		public Vector3 CameraRotation {
 			get => ExtensionMethods.ParseVec3 (Configuration.Global.Get<string> ("CameraRotation", "<0.6,0,0>"));
 			set {
@@ -875,15 +883,19 @@ namespace vkChess
 					return;
 
 				Vector3 tmp = new Vector3 (
-					normalizeAngle (value.X),
-					normalizeAngle (value.Y),
-					normalizeAngle (value.Z)
+					MathHelper.NormalizeAngle (value.X),
+					MathHelper.NormalizeAngle (value.Y),
+					MathHelper.NormalizeAngle (value.Z)
 				);
 				Configuration.Global.Set ("CameraRotation", tmp.ToString());
 				NotifyValueChanged ("CameraRotation", tmp);
 				camera.SetRotation (tmp.X, tmp.Y, tmp.Z);
 				updateViewRequested = true;
 			}
+		}
+		public float CameraAngleY {
+			get => CameraRotation.Y;
+			set => CameraRotation = new Vector3(CameraRotation.X, value, CameraRotation.Z);
 		}
 		public Vector3 CameraPosition {
 			get => ExtensionMethods.ParseVec3 (Configuration.Global.Get<string> ("CameraPosition", "<0,0,12>"));
@@ -942,6 +954,39 @@ namespace vkChess
 					p.SetColor (value);
 			}
 		}
+		public bool OptColorIsExpanded {
+			get => Configuration.Global.Get ("OptColorIsExpanded", false);
+			set {
+				if (OptColorIsExpanded == value)
+					return;
+				Configuration.Global.Set ("OptColorIsExpanded", value);
+			}
+		}
+		public bool OptRenderingIsExpanded {
+			get => Configuration.Global.Get ("OptRenderingIsExpanded", false);
+			set {
+				if (OptRenderingIsExpanded == value)
+					return;
+				Configuration.Global.Set ("OptRenderingIsExpanded", value);
+			}
+		}
+		public bool OptCameraIsExpanded {
+			get => Configuration.Global.Get ("OptCameraIsExpanded", false);
+			set {
+				if (OptCameraIsExpanded == value)
+					return;
+				Configuration.Global.Set ("OptCameraIsExpanded", value);
+			}
+		}
+		public bool OptGameIsExpanded {
+			get => Configuration.Global.Get ("OptGameIsExpanded", true);
+			set {
+				if (OptGameIsExpanded == value)
+					return;
+				Configuration.Global.Set ("OptGameIsExpanded", value);
+			}
+		}
+
 
 		#endregion
 
@@ -964,12 +1009,46 @@ namespace vkChess
 		}
 		#endregion
 
+		#region move history show
+		int historyIdx = 0;
+		public int HistoryMoveIndex {
+			get => historyIdx;
+			set {
+				if  (historyIdx == value)
+					return;
+
+				if (historyIdx == 0) {
+					//save current positions
+					savedMoves = StockfishMoves;
+				}
+
+				historyIdx = value;
+				NotifyValueChanged (historyIdx);
+
+				if (historyIdx == 0) {
+					//restore current saved positions
+					StockfishMoves = savedMoves;
+					savedMoves = null;
+					resync3DScene ();
+					startTurn ();
+				} else {
+					StockfishMoves = savedMoves.Take (savedMoves.Count - historyIdx).ToList();
+					resync3DScene ();
+				}
+			}
+		}
+
+		IList<string> savedMoves;
+
+
+		#endregion
+
 		#region Stockfish
 		object movesMutex = new object ();
 		Process stockfish;
 		volatile bool waitAnimationFinished;
 		//Queue<string> stockfishCmdQueue = new Queue<string> ();
-		List<String> stockfishMoves = new List<string> ();
+		IList<String> stockfishMoves = new ObservableList<string> ();
 
 		bool enableHint;
 		public bool EnableHint {
@@ -1004,7 +1083,7 @@ namespace vkChess
 				if (value == StockfishPath)
 					return;
 				Configuration.Global.Set ("StockfishPath", value);
-				NotifyValueChanged ("StockfishPath", value);
+				NotifyValueChanged (value);
 
 				initStockfish ();
 			}
@@ -1086,11 +1165,13 @@ namespace vkChess
 			}
 		}
 
-		public List<String> StockfishMoves {
+		public IList<String> StockfishMoves {
 			get => stockfishMoves;
 			set { stockfishMoves = value; }
 		}
 		void saveCurrentGame() {
+			if (historyIdx > 0)
+				StockfishMoves = savedMoves;
 			Configuration.Global.Set ("CurrentGame", stockfishPositionCommand);
 		}
 		void loadCurrentGame() {
@@ -1100,7 +1181,7 @@ namespace vkChess
 			string curGame = Configuration.Global.Get<string> ("CurrentGame");
 			if (string.IsNullOrEmpty (curGame))
 				return;
-			stockfishMoves = curGame.Split (' ').ToList();
+			stockfishMoves = new ObservableList<string> (curGame.Split (' '));
 
 			if (currentState < GameState.Play)
 				return;
@@ -1116,7 +1197,6 @@ namespace vkChess
 
 			syncStockfish();
 		}
-
 		void initStockfish () {
 			if (currentState == GameState.Init)
 				throw new Exception ("init stockfish impossible: 3d scene must be initialized first.");
@@ -1131,6 +1211,17 @@ namespace vkChess
 
 				stockfish.Kill ();
 				stockfish = null;
+			}
+
+			if (string.IsNullOrEmpty (StockfishPath)) {
+				if (RuntimeInformation.IsOSPlatform (OSPlatform.Linux))
+					StockfishPath = "./stockfish_14_x64";
+				else if (RuntimeInformation.IsOSPlatform (OSPlatform.Windows)) {
+					if (RuntimeInformation.OSArchitecture == Architecture.X64)
+						StockfishPath = "stockfish_14_x64.exe";
+					else if (RuntimeInformation.OSArchitecture == Architecture.X86)
+						StockfishPath = "stockfish_14_32bit.exe";
+				}
 			}
 
 			if (!File.Exists (StockfishPath)) {
@@ -1159,7 +1250,6 @@ namespace vkChess
 		void syncStockfish () {
 			if (currentState < GameState.Play)
 				return;
-			NotifyValueChanged ("StockfishMoves", StockfishMoves);
 			sendToStockfish ("setoption name Skill Level value " + (CurrentPlayer == ChessColor.White ? WhitesLevel.ToString() : BlacksLevel.ToString()));
 			//sendToStockfish ($"setoption name nodestime value 10");
 			sendToStockfish ($"position startpos moves {stockfishPositionCommand}");
@@ -1243,7 +1333,7 @@ namespace vkChess
 				case "Stockfish":
 					//stockfish starting
 					CurrentState = GameState.StockFishStarted;
-					NotifyValueChanged("StockfishVersion", tmp[1]);
+					NotifyValueChanged("StockfishVersion", (object)tmp[1]);
 					sendToStockfish ("uci");
 					break;
 				}
@@ -1316,18 +1406,34 @@ namespace vkChess
 
 				currentState = value;
 
-				if (currentState > GameState.Play) {
+				if (currentState > GameState.Pad) {
 					Point kPos = CurrentPlayerPieces.First (p => p.Type == PieceType.King).BoardCell;
 					Piece.UpdateCase (kPos.X, kPos.Y, kingCheckedColor);
 					if (currentState == GameState.Checkmate) {
 						Piece king = CurrentPlayerPieces.First (p => p.Type == PieceType.King);
-						Animation.StartAnimation (new FloatAnimation (king, "Z", 0.4f, 0.04f));
-						Animation.StartAnimation (new AngleAnimation (king, "XAngle", MathHelper.Pi * 0.55f, 0.09f));
-						Animation.StartAnimation (new AngleAnimation (king, "ZAngle", king.ZAngle + 0.3f, 0.5f));
+						Animation.StartAnimation (new FloatAnimation2 (king, "Z", 0.4f, 20));
+						Animation.StartAnimation (new AngleAnimation (king, "XAngle", MathHelper.Pi * 0.55f));
+						Animation.StartAnimation (new AngleAnimation (king, "ZAngle", king.ZAngle + 0.3f));
 					}
 				}
 
 				NotifyValueChanged ("CurrentState", currentState);
+				NotifyValueChanged ("CurrentStateColor", CurrentStateColor);
+			}
+		}
+		Color CurrentStateColor {
+			get {
+				switch (currentState) {
+					case GameState.Play:
+						return Colors.DarkGrey;
+					case GameState.Pad:
+						return Colors.DarkMagenta;
+					case GameState.Checked:
+						return Colors.DarkOrange;
+					case GameState.Checkmate:
+						return Colors.DarkRed;
+				}
+				return Colors.DarkSlateGrey;
 			}
 		}
 		ChessColor currentPlayer;
@@ -1343,15 +1449,12 @@ namespace vkChess
 			}
 		}
 
-		public ChessColor Opponent {
-			get { return CurrentPlayer == ChessColor.White ? ChessColor.Black : ChessColor.White; }
-		}
-		public Piece [] OpponentPieces {
-			get { return CurrentPlayer == ChessColor.White ? blackPieces : whitePieces; }
-		}
-		public Piece [] CurrentPlayerPieces {
-			get { return CurrentPlayer == ChessColor.White ? whitePieces : blackPieces; }
-		}
+		public ChessColor Opponent =>
+			CurrentPlayer == ChessColor.White ? ChessColor.Black : ChessColor.White;
+		public Piece [] OpponentPieces =>
+			CurrentPlayer == ChessColor.White ? blackPieces : whitePieces;
+		public Piece [] CurrentPlayerPieces
+			=> CurrentPlayer == ChessColor.White ? whitePieces : blackPieces;
 		public int GetPawnPromotionY (ChessColor color) => color == ChessColor.White ? 7 : 0;
 
 		Point Active {
@@ -1374,11 +1477,11 @@ namespace vkChess
 				}
 
 				if (active < 0) {
-					NotifyValueChanged ("ActCell", "");
+					NotifyValueChanged ("ActCell", (object)"");
 					return;
 				}
 
-				NotifyValueChanged ("ActCell", getChessCell (active.X, active.Y));
+				NotifyValueChanged ("ActCell", (object)getChessCell (active.X, active.Y));
 				Piece.UpdateCase (active.X, active.Y, activeColor);
 
 				ValidPositionsForActivePce = new List<Point> ();
@@ -1429,7 +1532,7 @@ namespace vkChess
 
 				if (selection >= 0)
 					Piece.UpdateCase (selection.X, selection.Y, selectionPosColor);
-				NotifyValueChanged ("SelCell", getChessCell (selection.X, selection.Y));
+				NotifyValueChanged ("SelCell", (object)getChessCell (selection.X, selection.Y));
 			}
 		}
 		int[] mesheIndexes;
@@ -1441,7 +1544,6 @@ namespace vkChess
 			cptWhiteOut = 0;
 			cptBlackOut = 0;
 			StockfishMoves.Clear ();
-			NotifyValueChanged ("StockfishMoves", StockfishMoves);
 
 			Active = -1;
 
@@ -1554,7 +1656,6 @@ namespace vkChess
 			cptWhiteOut = 0;
 			cptBlackOut = 0;
 			StockfishMoves.Clear ();
-			NotifyValueChanged ("StockfishMoves", StockfishMoves);
 
 			Active = -1;
 			board = new Piece [8, 8];
@@ -1985,7 +2086,6 @@ namespace vkChess
 				enPassant = true;
 
 			StockfishMoves.Add (move);
-			NotifyValueChanged ("StockfishMoves", StockfishMoves);
 
 			board [pStart.X, pStart.Y] = null;
 			Point pTarget = pEnd;
@@ -2035,6 +2135,12 @@ namespace vkChess
 			if (currentState == GameState.Checked || currentState == GameState.Checkmate) {
 				Point kPos = CurrentPlayerPieces.First (p => p.Type == PieceType.King).BoardCell;
 				Piece.UpdateCase (kPos.X, kPos.Y, -kingCheckedColor);
+				if (currentState == GameState.Checkmate) {
+					Piece king = CurrentPlayerPieces.First (p => p.Type == PieceType.King);
+					Animation.StartAnimation (new FloatAnimation2 (king, "Z", 0, 20));
+					Animation.StartAnimation (new AngleAnimation (king, "XAngle", 0));
+					Animation.StartAnimation (new AngleAnimation (king, "ZAngle", 0));
+				}
 			}
 
 			string move = StockfishMoves [StockfishMoves.Count - 1];
@@ -2079,7 +2185,7 @@ namespace vkChess
 			resetBoard (false);
 			foreach (string m in moves) {
 				processMove (m, false);
-				CurrentPlayer = Opponent;
+				currentPlayer = Opponent;
 			}
 		}
 
