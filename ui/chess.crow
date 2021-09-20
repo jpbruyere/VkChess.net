@@ -12,9 +12,6 @@
 			</MenuItem>
 		</ItemTemplate>
 	</Menu>
-	<CheckBox Caption="Hint" IsChecked="{²EnableHint}" Height="Stretched"
-			Background="Transparent" Foreground="White"
-			Unchecked = "{Background=Transparent}"/>
 	<Widget Width="Stretched"/>
 	<VerticalStack Style="hsStatus" Width="160">
 		<Label Style="labStatus" Text="State:" />

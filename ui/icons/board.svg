@@ -1,0 +1,11 @@
+<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+ <g id="Layer_1">
+  <title>Layer 1</title>
+  <g id="svg_5" transform="rotate(45, 16, 16)">
+   <rect fill="#191919" stroke="#000" stroke-width="0" x="5" y="5" width="11" height="11" id="svg_1"/>
+   <rect fill="#cccccc" stroke="#000" stroke-width="0" x="5" y="16" width="11" height="11" id="svg_2"/>
+   <rect fill="#191919" stroke="#000" stroke-width="0" x="16" y="16" width="11" height="11" id="svg_3"/>
+   <rect fill="#cccccc" stroke="#000" stroke-width="0" x="16" y="5" width="11" height="11" id="svg_4"/>
+  </g>
+ </g>
+</svg>

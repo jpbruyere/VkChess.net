@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Window Font="droid bold, 40" Height="50%" Width="60%" Caption="New Game">
+<Window Font="droid bold, 40" Height="50%" Width="60%" Caption="New Game" Icon="#icons.flag.svg" >
 	<VerticalStack Margin="30" Spacing="5">
 		<HorizontalStack Margin="0" Spacing="0">
 			<Container Width="50%" Margin="20">

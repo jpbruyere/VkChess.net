@@ -12,6 +12,8 @@ using Vulkan;
 using System.Reflection;
 using System.Net;
 using System.Runtime.InteropServices;
+using Window = Crow.Window;
+using System.Text;
 
 namespace vkChess
 {
@@ -53,21 +55,34 @@ namespace vkChess
 				app.Run ();
 		}
 
-		public CommandGroup Commands => new CommandGroup (
-			new CommandGroup ("Menu",
-				new Command ("New Game", () => loadWindow ("ui/newGame.crow", this)),
-				new Command ("Save", () => loadWindow ("ui/newGame.crow", this)),
-				new Command ("Load", () => loadWindow ("ui/newGame.crow", this)),
-				new Command ("Options", () => loadWindow ("ui/winOptions.crow", this)),
-				new Command ("Moves", () => loadWindow ("ui/winMoves.crow", this)),
-#if DEBUG
-				new Command ("Log", () => loadWindow ("ui/winLog.crow", this)),
-#endif
-				new Command ("Quit", () => Close())
-			),
-			new Command ("Undo", () => undo())
-			//new Command ("Redo", () => Close())
-		);
+		public CommandGroup Commands, IconBar;
+		public Command CMDUndo, CMDOptions, CMDViewBoard, CMDViewMoves, CMDLoadSelectedFile;
+		public ToggleCommand CMDToggleHint;
+		void initCommands () {
+			CMDUndo = new ActionCommand ("Undo", () => undo(), "#icons.undo.svg");
+			CMDOptions = new ActionCommand ("Options", () => loadWindow ("#ui.winOptions.crow", this), "#icons.options.svg");
+			CMDViewMoves = new ActionCommand ("Moves", () => loadWindow ("#ui.winMoves.crow", this), "#icons.moves.svg");
+			CMDViewBoard = new ActionCommand ("Mini Board", () => loadWindow ("#ui.winBoard.crow", this), "#icons.board.svg");
+			CMDLoadSelectedFile = new ActionCommand ("Load", () => loadGameFromFile (selectedSavedGame), "#icons.load.svg");
+			CMDToggleHint = new ToggleCommand (this, "Hint", new Binding<bool> ("EnableHint"), "#icons.hint.svg", null, true);
+
+			IconBar = new CommandGroup (CMDOptions, CMDViewBoard, CMDViewMoves, CMDUndo, CMDToggleHint);
+
+			Commands =  new CommandGroup (
+				new CommandGroup ("Menu",
+					new ActionCommand ("New Game", () => loadWindow ("#ui.winNewGame.crow", this), "#icons.flag.svg"),
+					new ActionCommand ("Save", () => loadWindow ("#ui.save.crow", this), "#icons.save.svg"),
+					new ActionCommand ("Load", () => loadWindow ("#ui.winLoad.crow", this), "#icons.load.svg"),
+					CMDOptions,
+					CMDViewBoard,
+					CMDViewMoves,
+	#if DEBUG
+					new ActionCommand ("Log", () => loadWindow ("#ui.winLog.crow", this), "#icons.load.svg"),
+	#endif
+					new ActionCommand ("Quit", () => Close(), "#icons.exit.svg")
+				)
+			);
+		}
 
 
 		public override string [] EnabledInstanceExtensions => new string [] {
@@ -127,6 +142,7 @@ namespace vkChess
 		}
 		protected override void initVulkan () {
 			initLog ();
+			initCommands();
 
 			base.initVulkan ();
 
@@ -182,9 +198,12 @@ namespace vkChess
 			initBoard ();
 			initStockfish ();
 
-			iFace.Load ("ui/chess.crow").DataSource = this;
+			iFace.Load ("#ui.menuOverlay.crow").DataSource = this;
+			iFace.Load ("#ui.chess.crow").DataSource = this;
 
-			loadCurrentGame ();
+			loadGameFromPositionString (Configuration.Global.Get<string> ("CurrentGame"));
+
+			restoreSavedOpenedWindows ();
 		}
 		void createCamera () {
 			camera = new Camera (Utils.DegreesToRadians (CameraFOV), 1f, 0.1f, 32f);
@@ -388,6 +407,7 @@ namespace vkChess
 
 		protected override void Dispose (bool disposing) {
 			saveCurrentGame ();
+			saveOpenedWindowConfig ();
 			Configuration.Global.Save();
 			if (disposing) {
 				if (!isDisposed) {
@@ -551,20 +571,13 @@ namespace vkChess
 				loadWindow (@"ui/winSSR.crow", this);
 				break;
 			case Glfw.Key.F2:
-				/*loadWindow (@"ui/board.crow", this);
-				*/
-				//loadWindow (@"ui/scene.crow", this.renderer.model);
-				loadWindow (@"ui/board.crow", this);
-				NotifyValueChanged ("board", board);
+				saveGame ();
 				break;
 			case Glfw.Key.F3:
 				checkBoardIntegrity ();
 				break;
 			case Glfw.Key.F4:
-				if (modifiers.HasFlag (Modifier.Shift))
-					loadCurrentGame ();
-				else
-					saveCurrentGame ();
+				loadWindow (@"ui/winLoad.crow", this);
 				break;
 			case Glfw.Key.Keypad0:
 				whitePieces [0].X = 0;
@@ -685,7 +698,7 @@ namespace vkChess
 			}
 		}
 		void onNewWhiteGame (object sender, MouseButtonEventArgs e) {
-			closeWindow ("ui/newGame.crow");
+			closeWindow ("#ui.winNewGame.crow");
 			if (CurrentState < GameState.Play)
 				return;
 			Log(LogType.Custom1, "New White Game");
@@ -708,7 +721,7 @@ namespace vkChess
 			Animation.StartAnimation (new AngleAnimation (this, "CameraAngleY", 0, 50));
 		}
 		void onNewBlackGame (object sender, MouseButtonEventArgs e) {
-			closeWindow ("ui/newGame.crow");
+			closeWindow ("#ui.winNewGame.crow");
 			if (CurrentState < GameState.Play)
 				return;
 			Log(LogType.Custom1, "New Black Game");
@@ -986,8 +999,91 @@ namespace vkChess
 				Configuration.Global.Set ("OptGameIsExpanded", value);
 			}
 		}
+		string defaultSaveDirectory => System.IO.Path.Combine (Configuration.AppConfigPath, "SavedGames");
+		public string[] SavedGames {
+			get {
+				if (!Directory.Exists (defaultSaveDirectory))
+					return null;
+				return Directory.GetFiles (defaultSaveDirectory, "*.chess");
+			}
+		}
+		string selectedSavedGame;
+		public string SelectedSavedGame {
+			get => selectedSavedGame;
+			set {
+				if (selectedSavedGame == value)
+					return;
+				selectedSavedGame = value;
+				NotifyValueChanged (selectedSavedGame);
 
+				if (string.IsNullOrEmpty (selectedSavedGame))
+					CMDLoadSelectedFile.CanExecute = false;
+				else if (File.Exists (selectedSavedGame))
+					CMDLoadSelectedFile.CanExecute = true;
+			}
+		}
+		void saveCurrentGame() {
+			if (historyIdx > 0)
+				StockfishMoves = savedMoves;
+			Configuration.Global.Set ("CurrentGame", stockfishPositionCommand);
+		}
 
+		void loadGameFromPositionString (string positions) {
+			if (string.IsNullOrEmpty (positions))
+				return;
+
+			stockfishMoves = new ObservableList<string> (positions.Split (' '));
+
+			if (currentState < GameState.Play)
+				return;
+
+			resync3DScene ();
+		}
+		void saveGame (string fileName = null) {
+			if (!Directory.Exists (defaultSaveDirectory))
+				Directory.CreateDirectory (defaultSaveDirectory);
+
+			if (string.IsNullOrEmpty (fileName))
+				fileName = $"{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.chess";
+			else if (!fileName.EndsWith (".chess"))
+				fileName += ".chess";
+
+			string filePath = System.IO.Path.Combine (defaultSaveDirectory, fileName);
+			using (Stream stream = new FileStream (filePath, FileMode.Create))
+				using (StreamWriter sw = new StreamWriter (stream))
+					sw.WriteLine (stockfishPositionCommand);
+		}
+		void loadGameFromFile (string fullPath) {
+			closeWindow ("#ui.winBoard.crow");
+			if (string.IsNullOrEmpty (fullPath) && !File.Exists (fullPath))
+				return;
+			using (Stream stream = new FileStream (fullPath, FileMode.Open))
+				using (StreamReader sw = new StreamReader (stream))
+					loadGameFromPositionString (sw.ReadLine ());
+		}
+		void saveOpenedWindowConfig () {
+			StringBuilder sb = new StringBuilder(100);
+			foreach	(Window win in iFace.GraphicTree.OfType<Window>())
+				sb.Append ($"{win.Name};{win.Left};{win.Top};{win.Width};{win.Height};{win.HorizontalAlignment};{win.VerticalAlignment}|");
+			Configuration.Global.Set<string> ("OpenedWindows",
+				sb.Length > 0 ?	sb.ToString (0, sb.Length - 1) : "");
+		}
+		void restoreSavedOpenedWindows () {
+			string wins = Configuration.Global.Get<string> ("OpenedWindows");
+			if (string.IsNullOrEmpty (wins))
+				return;
+			foreach	(string w in wins.Split ('|')) {
+				string [] tmp = w.Split (';');
+				loadWindow (tmp[0], this);
+				Widget win = iFace.FindByName (tmp[0]);
+				win.Left = int.Parse (tmp[1]);
+				win.Top = int.Parse (tmp[2]);
+				win.Width = Measure.Parse (tmp[3]);
+				win.Height = Measure.Parse (tmp[4]);
+				win.HorizontalAlignment = EnumsNET.Enums.Parse<HorizontalAlignment> (tmp[5]);
+				win.VerticalAlignment = EnumsNET.Enums.Parse<VerticalAlignment> (tmp[6]);
+			}
+		}
 		#endregion
 
 		#region LOGS
@@ -995,7 +1091,7 @@ namespace vkChess
 		ObservableList<LogEntry> logs = new ObservableList<LogEntry>();
 		public ObservableList<LogEntry> MainLog => logs;
 		void initLog () {
-			LogContextMenu = new CommandGroup (new Command("Clear Log", () => ResetLog()));
+			LogContextMenu = new CommandGroup (new ActionCommand("Clear Log", () => ResetLog()));
 		}
 		public void Log(LogType type, string message) {
 			if (string.IsNullOrEmpty (message))
@@ -1019,7 +1115,8 @@ namespace vkChess
 
 				if (historyIdx == 0) {
 					//save current positions
-					savedMoves = StockfishMoves;
+					lock (movesMutex)
+						savedMoves = StockfishMoves;
 				}
 
 				historyIdx = value;
@@ -1027,12 +1124,15 @@ namespace vkChess
 
 				if (historyIdx == 0) {
 					//restore current saved positions
-					StockfishMoves = savedMoves;
+					lock (movesMutex)
+						StockfishMoves = savedMoves;
 					savedMoves = null;
 					resync3DScene ();
 					startTurn ();
 				} else {
-					StockfishMoves = savedMoves.Take (savedMoves.Count - historyIdx).ToList();
+					lock (movesMutex)
+						StockfishMoves = savedMoves.Take (savedMoves.Count - historyIdx).ToList();
+					CurrentState = GameState.Play;
 					resync3DScene ();
 				}
 			}
@@ -1044,7 +1144,7 @@ namespace vkChess
 		#endregion
 
 		#region Stockfish
-		object movesMutex = new object ();
+		public static object movesMutex = new object ();
 		Process stockfish;
 		volatile bool waitAnimationFinished;
 		//Queue<string> stockfishCmdQueue = new Queue<string> ();
@@ -1168,24 +1268,6 @@ namespace vkChess
 		public IList<String> StockfishMoves {
 			get => stockfishMoves;
 			set { stockfishMoves = value; }
-		}
-		void saveCurrentGame() {
-			if (historyIdx > 0)
-				StockfishMoves = savedMoves;
-			Configuration.Global.Set ("CurrentGame", stockfishPositionCommand);
-		}
-		void loadCurrentGame() {
-
-			resetBoard (false);
-
-			string curGame = Configuration.Global.Get<string> ("CurrentGame");
-			if (string.IsNullOrEmpty (curGame))
-				return;
-			stockfishMoves = new ObservableList<string> (curGame.Split (' '));
-
-			if (currentState < GameState.Play)
-				return;
-			resync3DScene ();
 		}
 		void resync3DScene () {
 			replaySilently ();
@@ -1669,20 +1751,6 @@ namespace vkChess
 				board [p.initX, p.initY] = p;
 			}
 		}
-		void saveGame (string fileName = "default.chess") {
-			string defaultSaveDirectory = System.IO.Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.UserProfile), ".config",
-				System.Reflection.Assembly.GetEntryAssembly ().GetName().Name, "SavedGames");
-			if (!Directory.Exists (defaultSaveDirectory))
-				Directory.CreateDirectory (defaultSaveDirectory);
-
-			string filePath = System.IO.Path.Combine (defaultSaveDirectory, fileName);
-			using (Stream stream = new FileStream (filePath, FileMode.Create))
-				using (StreamWriter sw = new StreamWriter (stream))
-					sw.WriteLine (stockfishPositionCommand);
-		}
-		void loadGame (string fileName = "default.chess") {
-
-		}
 		void addPiece (ChessColor player, PieceType _type, int col, int line) {
 			Piece p = new Piece (player, _type, col, line,
 				player == ChessColor.White ? WhiteColor : BlackColor);
@@ -2012,15 +2080,14 @@ namespace vkChess
 			preview_Captured = null;
 		}
 		string getChessCell (Point cell) => getChessCell (cell.X, cell.Y);
-		string getChessCell (int col, int line) {
+		public static string getChessCell (int col, int line) {
 			if (col < 0 || line < 0)
 				return null;
 			char c = (char)(col + 97);
 			return c.ToString () + (line + 1).ToString ();
 		}
-		Point getChessCell (string s) {
-			return new Point ((int)s [0] - 97, int.Parse (s [1].ToString ()) - 1);
-		}
+		public static Point getChessCell (ReadOnlySpan<char> s)
+			=> new Point ((int)s [0] - 97, int.Parse (s [1].ToString ()) - 1);
 		Vector3 getCurrentCapturePosition (Piece p) {
 			float x, y;
 			if (p.Player == ChessColor.White) {

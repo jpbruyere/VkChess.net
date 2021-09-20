@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0"?>
-<Window Caption="Options" Top="10" Width="60%" Height="Fit" >
+<Window Caption="Options" Top="10" Width="60%" Height="Fit" Icon="#icons.options.svg" >
 	<VerticalStack Spacing="10" Margin="10" >
 		<VerticalStack Height="Fit" Background="${ContainerBackground}" Margin="5">
 			<HorizontalStack >
@@ -12,7 +12,7 @@
 			</HorizontalStack>
 		</VerticalStack>
 		<!--<HorizontalStack Height="Fit">-->
-		<Expandable Caption="Game" IsExpanded="{²OptGameIsExpanded}">
+		<Expandable Caption="Game" IsExpanded="{²OptGameIsExpanded}" Background="${ContainerBackground}">
 			<VerticalStack Height="Fit" Spacing="3" Margin="10">
 				<HorizontalStack Height="Fit">
 					<Label Width="Stretched" Text="Whites Level:"/>
@@ -50,7 +50,7 @@
 				</HorizontalStack>
 			</VerticalStack>
 		</HorizontalStack>-->
-		<Expandable Caption="Camera" IsExpanded="{²OptCameraIsExpanded}">
+		<Expandable Caption="Camera" IsExpanded="{²OptCameraIsExpanded}" Background="${ContainerBackground}">
 			<VerticalStack Height="Fit" Margin="10">
 				<Vector3Widget Caption="Rotation" Value="{²CameraRotation}" SmallIncrement="0.01" LargeIncrement="0.1" Minimum="-7.0" Maximum="7.0" Decimals="2"/>
 				<Vector3Widget Caption="Position" Value="{²CameraPosition}" SmallIncrement="0.1" LargeIncrement="1.0" Minimum="-20.0" Maximum="20.0" Decimals="1"/>
@@ -60,7 +60,7 @@
 				</HorizontalStack>
 			</VerticalStack>
 		</Expandable>
-		<Expandable Caption="Rendering" IsExpanded="{²OptRenderingIsExpanded}">
+		<Expandable Caption="Rendering" IsExpanded="{²OptRenderingIsExpanded}" Background="${ContainerBackground}">
 			<VerticalStack Height="Fit" Margin="10">
 				<HorizontalStack Style="Slid" >
 					<Label Text="Exposure:" Width="100"/>
@@ -84,7 +84,7 @@
 				</EnumSelector>
 			</VerticalStack>
 		</Expandable>
-		<Expandable Caption="Colors" IsExpanded="{²OptColorIsExpanded}">
+		<Expandable Caption="Colors" IsExpanded="{²OptColorIsExpanded}" Background="${ContainerBackground}">
 			<VerticalStack Height="Fit" Margin="10">
 				<Vector3Widget Caption="Black color" Value="{²BlackColor}" SmallIncrement="0.01" LargeIncrement="0.1" Maximum="1.0" Decimals="2"/>
 				<Vector3Widget Caption="White color" Value="{²WhiteColor}" SmallIncrement="0.01" LargeIncrement="0.1" Maximum="1.0" Decimals="2"/>

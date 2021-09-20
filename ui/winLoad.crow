@@ -1,0 +1,19 @@
+﻿<?xml version="1.0"?>
+<Window Caption="Saved Games" Width="80%" Height="80%" Icon="#icons.load.svg" >
+	<VerticalStack>
+		<ListBox Data="{SavedGames}" SelectedItem="{²SelectedSavedGame}">
+			<Template>
+				<Wrapper Name="ItemsContainer"/>
+			</Template>
+			<ItemTemplate>
+				<ListItem Fit="True" Margin="0" Focusable="true"
+					Selected = "{Background=${ControlHighlight}}"
+					Unselected = "{Background=Transparent}">
+					<BoardWidget Margin="0" FilePath="{}" Font="droid, 10" Width="200" Height="200" />
+				</ListItem>
+			</ItemTemplate>
+		</ListBox>
+		<Button Command="{CMDLoadSelectedFile}"/>
+	</VerticalStack>
+</Window>
+

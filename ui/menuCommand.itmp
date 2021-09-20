@@ -1,10 +1,11 @@
 ﻿<?xml version="1.0"?>
 <Button Command="{}" Width="Stretched" Height="Stretched">
 	<Template>
-		<Container Width="Stretched" Height="Stretched" Margin="6"
+		<HorizontalStack Width="Stretched" Height="Stretched" Margin="5" Spacing="5"
 						MouseEnter="{Background=${ControlHighlight}}"
 						MouseLeave="{Background=Transparent}">
-			<Label Text="{./Caption}" HorizontalAlignment="Left" />
-		</Container>
+			<Image Style="icon" Path="{./Icon}"/>
+			<Label Text="{./Caption}" HorizontalAlignment="Left" Margin="5"/>
+		</HorizontalStack>
 	</Template>
 </Button>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Border Name="Content" Margin="2" Width="40" Height="40" BorderWidth="1"
+				Background="${ContainerBackground}" Tooltip="{./Caption}"
+				Foreground="Transparent" CornerRadius="{./CornerRadius}"
+				MouseEnter="{Foreground=White}"
+				MouseLeave="{Foreground=Transparent}"
+				MouseDown="{Background=${ControlHighlight}}"
+				MouseUp="{Background=${ContainerBackground}}"
+				ClipToClientRect="true">
+		<Group DataSource="{./Command}" >
+			<Widget Background="${ControlHighlight}" IsVisible="{IsToggled}" CornerRadius="15"/>
+			<Image Style="icon" Name="caption" Path="{./Icon}" />
+		</Group>
+</Border>

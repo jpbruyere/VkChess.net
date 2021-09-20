@@ -1,0 +1,7 @@
+﻿<?xml version="1.0"?>
+<Window Font="droid bold, 10" Caption="Mini Board" Width="200" Height="200" HorizontalAlignment="Right" Top="10"
+		Icon="#icons.board.svg" >
+	<Container>
+		<BoardWidget Margin="1" Moves="{StockfishMoves}" Font="droid, 10" />
+	</Container>
+</Window>

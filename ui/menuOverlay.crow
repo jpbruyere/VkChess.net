@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Menu Width="Fit" Height="Fit" HorizontalAlignment="Left" Data="{IconBar}">
+	<Template>
+		<HorizontalStack Name="ItemsContainer" Spacing="10" Margin="10"/>
+	</Template>
+	<ItemTemplate DataType="Crow.ToggleCommand">
+		<Button Style="icoToggle" Command="{}" />
+	</ItemTemplate>
+	<ItemTemplate DataType="Crow.Command">
+		<Button Style="icoButton" Command="{}" />
+	</ItemTemplate>
+</Menu>

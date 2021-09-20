@@ -5,9 +5,9 @@
 	<Template>
 		<Container Background="{./Background}" Width="Stretched" Height="Stretched" Margin="6">
 			<Label Text="{./Caption}" HorizontalAlignment="Left" />
-		</Container>	
+		</Container>
 	</Template>
-	<VerticalStack Margin="5" Name="ItemsContainer" Fit="true" Background="${MenusBackground}" />
+	<VerticalStack Margin="0" Name="ItemsContainer" Fit="true" Background="${MenusBackground}" />
 </Popper>
 
 

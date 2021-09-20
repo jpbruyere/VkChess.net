@@ -1,17 +1,52 @@
 ﻿//ControlHighlight = "0.2,0.3,0.8,0.9";
 ControlHighlight = "MidnightBlue";
+ControlForeground = "Grey";
 LogFont = "consolas, 10";
 WindowBackground = "0.01,0.01,0.02,0.8";
-ContainerBackground = "0.01,0.01,0.01,0.9";
+WindowTitleBarBackground = "0.01,0.1,0.4,0.8";
+ContainerBackground = "0.2,0.2,0.21,0.9";
 StateCtrlInactiveBackground = "0.02,0.02,0.02,0.9";
 StateCtrlInactiveForeground = "White";
 StateCtrlHighlightForeground = "Black";
 StatusElementBackground = "#040404";
-MenusBackground = "0.1,0.1,0.1,0.7";
+MenusBackground = "0.1,0.1,0.1,0.2";
 
+ControlCaption {
+	Foreground  = "${ControlForeground}";
+	//MouseEnter	= "{Foreground=${ControlCaptionHoverColor}}";
+	//MouseLeave	= "{Foreground=${ControlForeground}}";
+}
 icon {
-	Width="14";
-	Height="14";
+	Width="24";
+	Height="24";
+}
+
+icoButton {
+	Template = "ui/icoButton.tmp";
+	MinimumSize = "1,1";
+	Width="Fit";
+	Height="Fit";
+	CornerRadius="15";
+	Foreground = "Transparent";
+	Background = "${ContainerBackground}";
+}
+icoToggle {
+	Template = "ui/icoToggle.tmp";
+	MinimumSize = "1,1";
+	Width="Fit";
+	Height="Fit";
+	CornerRadius="15";
+	Foreground = "Transparent";
+	Background = "${ContainerBackground}";
+}
+CheckBox {
+	Template = "#ui.checkBox.tmp";
+	MinimumSize = "80, 30";
+	Width="Fit";
+	Height= "Fit";
+	Background="${StateCtrlInactiveBackground}";
+	Checked="{Background=${ControlHighlight}}";
+	Unchecked = "{Background=${StateCtrlInactiveBackground}}";
 }
 
 hsStatus {
@@ -36,13 +71,17 @@ labStatus2 {
 }
 
 CheckBox {
-	Template = "ui/checkBox.tmp";
+	Template = "#ui.checkBox.tmp";
 	MinimumSize = "80, 30";
 	Width="Fit";
 	Height= "Fit";
 	Background="${StateCtrlInactiveBackground}";
 	Checked="{Background=${ControlHighlight}}";
 	Unchecked = "{Background=${StateCtrlInactiveBackground}}";
+}
+Spinner {
+	Template = "#ui.Spinner.tmp";
+
 }
 RadioButton {
 	Template = "ui/checkBox.tmp";
@@ -65,7 +104,12 @@ Window {
 	Template="ui/Window.template";
 	AllowedStates="Normal";
 	CornerRadius="0";
+	MinimumSize="100,100";
 	Background="${WindowBackground}";
+}
+WindowIconBorder {
+	Height="18";
+	Width="18";
 }
 Expandable {
 	Background="${ContainerBackground}";
@@ -124,7 +168,6 @@ winBorder {
 	StickyMouseEnabled="true";
 	StickyMouse="10";
 }
-
 chessPceButtonMargin = "5";
 chessPceButtonImageMargin = "2";
 

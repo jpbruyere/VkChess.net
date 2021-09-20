@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
-<Window Caption="Moves" Top="10" Left="10" Width="100" Height="50%" >
+<Window Caption="Moves" Top="60" Left="10" Width="120" Height="50%" Icon="#icons.moves.svg" >
 	<VerticalStack>
-		<MoveHistoryWidget Margin="10" Moves="{StockfishMoves}" CurrentMoveIndex="{²HistoryMoveIndex}"/>
+		<MoveHistoryWidget Margin="5" Moves="{StockfishMoves}" CurrentMoveIndex="{²HistoryMoveIndex}"/>
 	</VerticalStack>
 </Window>
 
