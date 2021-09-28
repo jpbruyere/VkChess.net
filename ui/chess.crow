@@ -12,6 +12,9 @@
 			</MenuItem>
 		</ItemTemplate>
 	</Menu>
+	<Label Text="Restart required..." Font="droid bold, 14" Visible="{RestartRequired}" Margin="3"
+		Background="#100101" Foreground="White" />
+
 	<Widget Width="Stretched"/>
 	<VerticalStack Style="hsStatus" Width="160">
 		<Label Style="labStatus" Text="State:" />

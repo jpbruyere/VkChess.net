@@ -77,7 +77,6 @@
 				<HorizontalStack >
 					<CheckBox Caption="Enable Reflections" IsChecked="{²EnableReflections}" />
 					<CheckBox Caption="Enable Tesselation" IsChecked="{²EnableTesselation}" />
-					<Label Text="(restart required)"/>
 				</HorizontalStack >
 				<EnumSelector Caption="Sample count" ForceRadioButton="true" BitFieldExcludeMask="{AvailableSampleCount}" EnumValue="{²SampleCount}" Height="Fit" Width="Stretched">
 					<Template>

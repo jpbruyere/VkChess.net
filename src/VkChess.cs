@@ -832,6 +832,7 @@ namespace vkChess
 				renderer.uboLights.Update (renderer.lights);
 			}
 		}
+		public bool RestartRequired => false;
 		public VkSampleCountFlags SampleCount {
 			get => Configuration.Global.Get<VkSampleCountFlags> ("SampleCount", VkSampleCountFlags.SampleCount1);
 			set {
@@ -840,6 +841,7 @@ namespace vkChess
 				Configuration.Global.Set ("SampleCount", value);
 				DeferredPbrRendererBase.NUM_SAMPLES = value;
 				NotifyValueChanged ("SampleCount", value);
+				NotifyValueChanged ("RestartRequired", true);
 			}
 		}
 		public bool EnableTesselation {
@@ -849,6 +851,7 @@ namespace vkChess
 					return;
 				Configuration.Global.Set ("EnableTesselation", value);
 				NotifyValueChanged ("EnableTesselation", value);
+				NotifyValueChanged ("RestartRequired", true);
 			}
 		}
 		public bool EnableReflections {
@@ -858,6 +861,7 @@ namespace vkChess
 					return;
 				Configuration.Global.Set ("EnableReflections", value);
 				NotifyValueChanged ("EnableReflections", value);
+				NotifyValueChanged ("RestartRequired", true);
 			}
 		}
 		public float SSRStep {
