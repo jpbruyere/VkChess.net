@@ -57,16 +57,6 @@ namespace vkChess
 		public Matrices matrices = new Matrices {
 			scaleIBLAmbient = 0.5f
 		};
-		//public Light[] lights = {
-		//    new Light {
-		//        position = new Vector4(3.5f,12.5f,2,0f),
-		//        color = new Vector4(1,0.8f,0.8f,1)
-		//    },
-		//    new Light {
-		//        position = new Vector4(-3.5f,12.5f,2,0f),
-		//        color = new Vector4(0.8f,0.8f,1,1)
-		//    }
-		//};
 		public Light [] lights = {
 			new Light {
 				position = new Vector4(5.5f,12.5f,2,0f),
@@ -77,9 +67,6 @@ namespace vkChess
 				color = new Vector4(1,1,1,1)
 			}*/
 		};
-
-		//public DescriptorSetWrites UiImageUpdate => new DescriptorSetWrites (dsMain, descLayoutMain.Bindings [8]);
-
 		const float lightMoveSpeed = 0.1f;
 
 		FrameBuffers frameBuffers;
@@ -111,9 +98,10 @@ namespace vkChess
 		const int SP_DEPTH_PREPASS	= 1;
 		const int SP_MODELS         = 2;
 		const int SP_COMPOSE        = 3;
-		//const int SP_TONE_MAPPING   = 4;
 
 		public Model.Scene mainScene;
+
+		bool enableTesselation => Crow.Configuration.Global.Get<bool> ("EnableTesselation", false);
 
 		public DeferredPbrRendererBase (Device dev, SwapChain swapChain, PresentQueue presentQueue, string cubemapPath, float nearPlane, float farPlane) {
 			this.dev = dev;
@@ -266,13 +254,17 @@ namespace vkChess
 							new SpecializationConstant<float> (0, nearPlane),
 							new SpecializationConstant<float> (1, farPlane),
 							new SpecializationConstant<int> (2, MAX_MATERIAL_COUNT))) {
-					cfg.inputAssemblyState.topology = VkPrimitiveTopology.PatchList;
 
-					cfg.AddShader (dev, VkShaderStageFlags.TessellationControl, "#vkChess.net.pntriangles.tesc.spv");
-					cfg.AddShader (dev, VkShaderStageFlags.TessellationEvaluation, "#vkChess.net.pntriangles.tese.spv");
-					cfg.AddShader (dev, VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbrInstanced.vert.spv");
-
-					cfg.TessellationPatchControlPoints = 3;
+					if (enableTesselation) {
+						cfg.inputAssemblyState.topology = VkPrimitiveTopology.PatchList;
+						cfg.AddShader (dev, VkShaderStageFlags.TessellationControl, "#vkChess.net.pntriangles.tesc.spv");
+						cfg.AddShader (dev, VkShaderStageFlags.TessellationEvaluation, "#vkChess.net.pntriangles.tese.spv");
+						cfg.AddShader (dev, VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbrInstancedTesselation.vert.spv");
+						cfg.TessellationPatchControlPoints = 3;
+					} else {
+						cfg.inputAssemblyState.topology = VkPrimitiveTopology.TriangleList;
+						cfg.AddShader (dev, VkShaderStageFlags.Vertex, "#vkChess.net.GBuffPbrInstanced.vert.spv");
+					}
 
 					cfg.SubpassIndex = SP_DEPTH_PREPASS;
 

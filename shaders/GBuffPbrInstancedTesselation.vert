@@ -14,20 +14,17 @@ layout (set = 0, binding = 0) uniform UBO {
 	mat4 view;
 } ubo;
 
-layout (location = 0) out vec3 outWorldPos;
-layout (location = 1) out vec3 outNormal;
-layout (location = 2) out vec2 outUV0;
-layout (location = 3) out vec2 outUV1;
-layout (location = 4) out vec4 outColor;
+layout (location = 0) out vec3 outNormal;
+layout (location = 1) out vec2 outUV0;
+layout (location = 2) out vec2 outUV1;
+layout (location = 3) out vec4 outColor;
 
 void main()
 {
-	vec4 locPos = ubo.model * inModel * vec4(inPos, 1.0);
-
 	outNormal = normalize(transpose(inverse(mat3(ubo.model * inModel))) * inNormal);
-	outColor = inColor;
-	outWorldPos = locPos.xyz;
 	outUV0 = inUV0;
 	outUV1 = inUV1;
-	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
+	outColor = inColor;
+
+	gl_Position = ubo.model * inModel * vec4(inPos, 1.0);
 }

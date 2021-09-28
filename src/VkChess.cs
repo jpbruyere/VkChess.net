@@ -107,7 +107,9 @@ namespace vkChess
 #if PIPELINE_STATS
 			enabled_features.pipelineStatisticsQuery = available_features.pipelineStatisticsQuery;
 #endif
-			enabled_features.tessellationShader = available_features.tessellationShader;
+			if (!available_features.tessellationShader)
+				EnableTesselation = false;
+			enabled_features.tessellationShader = EnableTesselation;
 		}
 
 #if PIPELINE_STATS
@@ -838,6 +840,15 @@ namespace vkChess
 				Configuration.Global.Set ("SampleCount", value);
 				DeferredPbrRendererBase.NUM_SAMPLES = value;
 				NotifyValueChanged ("SampleCount", value);
+			}
+		}
+		public bool EnableTesselation {
+			get => Configuration.Global.Get<bool> ("EnableTesselation", false);
+			set {
+				if (value == EnableTesselation)
+					return;
+				Configuration.Global.Set ("EnableTesselation", value);
+				NotifyValueChanged ("EnableTesselation", value);
 			}
 		}
 		public bool EnableReflections {

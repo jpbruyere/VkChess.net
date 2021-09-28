@@ -74,7 +74,11 @@
 					<Label Text="IBL Ambient:" Width="100" />
 					<Slider Style="LightingSlider" Value="{²IBLAmbient}" Maximum="50.0" SmallIncrement="0.01" LargeIncrement="0.1"/>
 				</HorizontalStack>
-				<CheckBox Caption="Enable Reflections" IsChecked="{²EnableReflections}" />
+				<HorizontalStack >
+					<CheckBox Caption="Enable Reflections" IsChecked="{²EnableReflections}" />
+					<CheckBox Caption="Enable Tesselation" IsChecked="{²EnableTesselation}" />
+					<Label Text="(restart required)"/>
+				</HorizontalStack >
 				<EnumSelector Caption="Sample count" ForceRadioButton="true" BitFieldExcludeMask="{AvailableSampleCount}" EnumValue="{²SampleCount}" Height="Fit" Width="Stretched">
 					<Template>
 						<GroupBox Caption="{./Caption}" CornerRadius="{./CornerRadius}" Foreground="{./Foreground}" Background="{./Background}">

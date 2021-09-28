@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0"?>
 <Window Caption="SSR" Width="90%" Height="Fit" >
-    <VerticalStack Spacing="1" Margin="10" >
+	<VerticalStack Spacing="1" Margin="10" >
 		<HorizontalStack Style="Slid" >
 			<Label Text="Step:" Width="100"/>
 			<Slider Style="LightingSlider" Value="{²SSRStep}" Decimals="4" Maximum="1.0" SmallIncrement="0.0001" LargeIncrement="0.01"/>
-		</HorizontalStack>        
+		</HorizontalStack>
 		<HorizontalStack Style="Slid" >
 			<Label Text="Depth Threshold:" Width="100" />
 			<Slider Style="LightingSlider" Value="{²SSRThreshold}" Decimals="4" Maximum="1.0" SmallIncrement="0.0001" LargeIncrement="0.01"/>
@@ -12,7 +12,7 @@
 		<HorizontalStack Style="Slid" >
 			<Label Text="Max Step Count:" Width="100" />
 			<Slider Style="LightingSlider" Value="{²SSRMaxStepCount}" Maximum="1000" SmallIncrement="1" LargeIncrement="10"/>
-		</HorizontalStack>            
-    </VerticalStack>
+		</HorizontalStack>
+	</VerticalStack>
 </Window>
 

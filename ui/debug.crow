@@ -14,10 +14,10 @@
 		<Expandable Caption="Debug Views" Margin="5">
 		    <VerticalStack Spacing="1" Margin="10" >
 		        <HorizontalStack Height="Fit">
-		            <Label Text="Fps:" Width="80"/>            
-		            <Label Text="{fps}" Width="Stretched" TextAlignment="Center"/>    
+		            <Label Text="Fps:" Width="80"/>
+		            <Label Text="{fps}" Width="Stretched" TextAlignment="Center"/>
 		        </HorizontalStack>               
-		        <EnumSelector Margin="20" EnumValue="{²CurrentDebugView}" />                
+		        <EnumSelector Margin="20" EnumValue="{²CurrentDebugView}" />
 		    </VerticalStack>
 		</Expandable>
 		<Expandable Caption="Materials" Margin="5">
