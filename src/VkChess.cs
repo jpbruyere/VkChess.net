@@ -49,8 +49,6 @@ namespace vkChess
 			//Instance.RENDER_DOC_CAPTURE = true;
 			//SwapChain.PREFERED_FORMAT = VkFormat.B8g8r8a8Unorm;
 			DeferredPbrRendererBase.MAX_MATERIAL_COUNT = 3;
-			DeferredPbrRendererBase.MRT_FORMAT = VkFormat.R16g16b16a16Sfloat;
-			DeferredPbrRendererBase.HDR_FORMAT = VkFormat.R16g16b16a16Sfloat;
 			PbrModelTexArray.TEXTURE_DIM = 1024;
 			ShadowMapRenderer.SHADOWMAP_SIZE = 1024;
 			using (VkChess app = new VkChess ())
@@ -144,6 +142,13 @@ namespace vkChess
 			base.createQueues ();
 			transferQ = new Queue (dev, VkQueueFlags.Transfer);
 		}
+		public VkFormat GetSuitableGBuffImgFormat (params VkFormat[] formats) {
+			foreach (VkFormat f in formats) {
+				if (phy.GetFormatProperties (f).optimalTilingFeatures.HasFlag(VkFormatFeatureFlags.ColorAttachment | VkFormatFeatureFlags.SampledImage))
+					return f;
+			}
+			throw new InvalidOperationException ("No suitable image format for the GBuffer found.");
+		}
 		protected override void initVulkan () {
 			initLog ();
 			initCommands();
@@ -151,6 +156,14 @@ namespace vkChess
 			base.initVulkan ();
 
 			iFace.SetWindowIcon ("#Crow.Icons.crow.png");
+
+			VkFormat gbuffFormat = LowerGBuffFormat ?
+				GetSuitableGBuffImgFormat (VkFormat.R16g16b16a16Sfloat) :
+				GetSuitableGBuffImgFormat (VkFormat.R64g64b64a64Sfloat, VkFormat.R32g32b32a32Sfloat, VkFormat.R16g16b16a16Sfloat);
+
+			DeferredPbrRendererBase.MRT_FORMAT = gbuffFormat;
+			DeferredPbrRendererBase.HDR_FORMAT = gbuffFormat;
+
 
 			VkSampleCountFlags maxSamples = maxSampleCount;
 			if (SampleCount > maxSamples)
@@ -841,6 +854,16 @@ namespace vkChess
 				Configuration.Global.Set ("SampleCount", value);
 				DeferredPbrRendererBase.NUM_SAMPLES = value;
 				NotifyValueChanged ("SampleCount", value);
+				NotifyValueChanged ("RestartRequired", true);
+			}
+		}
+		public bool LowerGBuffFormat {
+			get => Configuration.Global.Get<bool> ("LowerGBuffFormat", true);
+			set {
+				if (value == LowerGBuffFormat)
+					return;
+				Configuration.Global.Set ("LowerGBuffFormat", value);
+				NotifyValueChanged ("LowerGBuffFormat", value);
 				NotifyValueChanged ("RestartRequired", true);
 			}
 		}

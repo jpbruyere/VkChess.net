@@ -77,6 +77,7 @@
 				<HorizontalStack >
 					<CheckBox Caption="Enable Reflections" IsChecked="{²EnableReflections}" />
 					<CheckBox Caption="Enable Tesselation" IsChecked="{²EnableTesselation}" />
+					<CheckBox Caption="Lower GBuffer texture format" IsChecked="{²LowerGBuffFormat}" />
 				</HorizontalStack >
 				<EnumSelector Caption="Sample count" ForceRadioButton="true" BitFieldExcludeMask="{AvailableSampleCount}" EnumValue="{²SampleCount}" Height="Fit" Width="Stretched">
 					<Template>
