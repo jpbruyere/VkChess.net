@@ -28,8 +28,10 @@ namespace vkChess
 
 			switch (libraryName)
 			{
+				case "cairo":
+					return System.Runtime.InteropServices.NativeLibrary.Load("cairo-2", assembly, null);
 				case "glfw3":
-					return  System.Runtime.InteropServices.NativeLibrary.Load("glfw", assembly, null);
+					return System.Runtime.InteropServices.NativeLibrary.Load("glfw", assembly, null);
 				case "rsvg-2.40":
 					return  System.Runtime.InteropServices.NativeLibrary.Load("rsvg-2", assembly, null);
 			}
@@ -465,7 +467,7 @@ namespace vkChess
 			double diffX = lastMouseX - xPos;
 			double diffY = lastMouseY - yPos;
 
-			if (GetButton (MouseButton.Middle) == InputAction.Press) {
+			if (GetButton (MouseButton.Right) == InputAction.Press) {
 				camera.Rotate ((float)-diffY, (float)-diffX);
 				CameraRotation = camera.Rotation;
 				return;
