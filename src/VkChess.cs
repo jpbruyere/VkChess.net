@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) 2020-2021  Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,8 +13,6 @@ using vke;
 using vke.glTF;
 using Glfw;
 using Vulkan;
-using System.Reflection;
-using System.Net;
 using System.Runtime.InteropServices;
 using Window = Crow.Window;
 using System.Text;
@@ -23,26 +25,6 @@ namespace vkChess
 	public enum PieceType { Pawn, Rook, Knight, Bishop, King, Queen };
 
 	public class VkChess : CrowWindow {
-#if NETCOREAPP
-		static IntPtr resolveUnmanaged (Assembly assembly, String libraryName) {
-
-			switch (libraryName)
-			{
-				case "cairo":
-					return System.Runtime.InteropServices.NativeLibrary.Load("cairo-2", assembly, null);
-				case "glfw3":
-					return System.Runtime.InteropServices.NativeLibrary.Load("glfw", assembly, null);
-				case "rsvg-2.40":
-					return  System.Runtime.InteropServices.NativeLibrary.Load("rsvg-2", assembly, null);
-			}
-			Console.WriteLine ($"[UNRESOLVE] {assembly} {libraryName}");
-			return IntPtr.Zero;
-		}
-
-		static VkChess () {
-			System.Runtime.Loader.AssemblyLoadContext.Default.ResolvingUnmanagedDll+=resolveUnmanaged;
-		}
-#endif
 		VkChess(){}
 		static void Main (string [] args) {
 			//Instance.VALIDATION = true;

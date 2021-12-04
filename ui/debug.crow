@@ -16,7 +16,7 @@
 		        <HorizontalStack Height="Fit">
 		            <Label Text="Fps:" Width="80"/>
 		            <Label Text="{fps}" Width="Stretched" TextAlignment="Center"/>
-		        </HorizontalStack>               
+		        </HorizontalStack>
 		        <EnumSelector Margin="20" EnumValue="{²CurrentDebugView}" />
 		    </VerticalStack>
 		</Expandable>

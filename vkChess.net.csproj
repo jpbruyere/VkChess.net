@@ -2,8 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    	<!--<TargetFrameworks>netcoreapp3.1</TargetFrameworks>-->
 		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<AssemblyVersion>0.2.0</AssemblyVersion>
+		<License>MIT</License>
+		<Authors>Jean-Philippe Bruyère</Authors>
+		<Description>Vulkan Stockfish client</Description>
 
 		<EnableDefaultNoneItems>false</EnableDefaultNoneItems>
 		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -28,17 +31,12 @@
 		<Compile Include="src\**\*.cs" />
 	</ItemGroup>
 
-
 	<ItemGroup>
-		<!--<PackageReference Include="Crow" Version="0.9.7-beta" />-->
-
-		<PackageReference Include="VkCrowWindow" Version="0.3.6-beta" />
-		<PackageReference Include="vke" Version="0.2.1-beta" />
-		<PackageReference Include="SpirVTasks" Version="0.1.44" />
-		<PackageReference Include="vke.EnvironmentPipeline" Version="0.2.1-beta" />
-		<PackageReference Include="vke.gltfLoader" Version="0.2.1-beta" />
+		<PackageReference Include="VkCrowWindow" Version="0.3.8" />
+		<PackageReference Include="SpirVTasks" Version="0.1.45" />
+		<PackageReference Include="vke.EnvironmentPipeline" Version="0.2.2-beta" />
+		<PackageReference Include="vke.gltfLoader" Version="0.2.2-beta" />
 	</ItemGroup>
-
 
 	<PropertyGroup>
         <TestProperty>notset</TestProperty>
@@ -48,11 +46,5 @@
 		<CreateProperty Value="$(TargetPath)">
 			<Output TaskParameter="Value" PropertyName="TestProperty"/>
 		</CreateProperty>
-
-		<!--<ItemGroup>
-			<TestItemGroup>
-				<TestProperty>this is a test string</TestProperty>
-			</TestItemGroup>
-		</ItemGroup>-->
 	</Target>
 </Project>

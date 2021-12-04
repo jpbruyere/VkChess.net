@@ -1,11 +1,11 @@
 ﻿//ControlHighlight = "0.2,0.3,0.8,0.9";
-ControlHighlight = "MidnightBlue";
+ControlHighlight = "RoyalBlue";
 ControlForeground = "Grey";
 LogFont = "consolas, 10";
-WindowBackground = "0.01,0.01,0.02,0.8";
-WindowTitleBarBackground = "0.01,0.1,0.4,0.8";
-ContainerBackground = "0.2,0.2,0.21,0.9";
-StateCtrlInactiveBackground = "0.02,0.02,0.02,0.9";
+WindowBackground = "0.1,0.1,0.2,0.7";
+WindowTitleBarBackground = "0.1,0.2,0.4,0.8";
+ContainerBackground = "0.3,0.3,0.4,0.9";
+StateCtrlInactiveBackground = "0.2,0.2,0.2,0.9";
 StateCtrlInactiveForeground = "White";
 StateCtrlHighlightForeground = "Black";
 StatusElementBackground = "#040404";
