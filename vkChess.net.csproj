@@ -33,7 +33,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="VkCrowWindow" Version="0.3.8" />
-		<PackageReference Include="SpirVTasks" Version="0.1.45" />
+		<PackageReference Include="SpirVTasks" Version="0.1.45" PrivateAssets="all" />
 		<PackageReference Include="vke.EnvironmentPipeline" Version="0.2.2-beta" />
 		<PackageReference Include="vke.gltfLoader" Version="0.2.2-beta" />
 	</ItemGroup>
