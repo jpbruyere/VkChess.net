@@ -45,14 +45,16 @@ layout (constant_id = 0) const float NEAR_PLANE = 0.1f;
 layout (constant_id = 1) const float FAR_PLANE = 32.0f;
 
 layout (set = 0, binding = 0) uniform sampler2D uiImage;
-layout (set = 0, binding = 1) uniform sampler2D samplerHDR;
+layout (set = 0, binding = 1) uniform sampler2DMS samplerHDR;
 
 layout (location = 0) in vec2 inUV;
 layout (location = 0) out vec4 outColor;
 
 void main()
 {
-		vec4 hdrColor = texture(samplerHDR, inUV);
+		//vec4 hdrColor = texture(samplerHDR, inUV);
+		vec4 hdrColor = texelFetch (samplerHDR, ivec2(gl_FragCoord.xy), gl_SampleID);
+		
 		vec4 uiColor = texture(uiImage, inUV);
 		outColor = tonemap(hdrColor, exposure, gamma);
 		outColor = vec4(outColor.rgb * (1 - uiColor.a) + uiColor.rgb * uiColor.a, 1);

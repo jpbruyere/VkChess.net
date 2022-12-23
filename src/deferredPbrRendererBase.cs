@@ -232,7 +232,7 @@ namespace vkChess
 
 				if (NUM_SAMPLES != VkSampleCountFlags.SampleCount1) {
 					cfg.multisampleState.sampleShadingEnable = true;
-					cfg.multisampleState.minSampleShading = 0.5f;
+					cfg.multisampleState.minSampleShading = 1.0f;
 				}
 				cfg.Cache = pipelineCache;
 				cfg.Layout = new PipelineLayout (dev,

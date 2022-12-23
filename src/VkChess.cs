@@ -82,14 +82,11 @@ namespace vkChess
 			enabled_features.samplerAnisotropy = available_features.samplerAnisotropy;
 			enabled_features.sampleRateShading = available_features.sampleRateShading;
 			enabled_features.geometryShader = available_features.geometryShader;
-			//enabled_features.tessellationShader = available_features.tessellationShader;
 			enabled_features.textureCompressionBC = available_features.textureCompressionBC;
 #if PIPELINE_STATS
 			enabled_features.pipelineStatisticsQuery = available_features.pipelineStatisticsQuery;
 #endif
-			if (!available_features.tessellationShader)
-				EnableTesselation = false;
-			enabled_features.tessellationShader = EnableTesselation;
+			enabled_features.tessellationShader = EnableTesselation & available_features.tessellationShader;
 		}
 
 #if PIPELINE_STATS
@@ -146,11 +143,6 @@ namespace vkChess
 			DeferredPbrRendererBase.MRT_FORMAT = gbuffFormat;
 			DeferredPbrRendererBase.HDR_FORMAT = gbuffFormat;
 
-
-			VkSampleCountFlags maxSamples = maxSampleCount;
-			if (SampleCount > maxSamples)
-				SampleCount = maxSamples;
-			DeferredPbrRendererBase.NUM_SAMPLES =  SampleCount;
 
 #if DEBUG
 			/*dbgmsg = new vke.DebugUtils.Messenger (instance, VkDebugUtilsMessageTypeFlagsEXT.PerformanceEXT | VkDebugUtilsMessageTypeFlagsEXT.ValidationEXT | VkDebugUtilsMessageTypeFlagsEXT.GeneralEXT,
@@ -214,6 +206,11 @@ namespace vkChess
 
 		#region VKCrowWindow pipeline overrides
 		protected override void CreateRenderPass () {
+			VkSampleCountFlags maxSamples = maxSampleCount;
+			if (SampleCount > maxSamples)
+				SampleCount = maxSamples;
+			DeferredPbrRendererBase.NUM_SAMPLES =  SampleCount;
+
 			renderPass = new RenderPass (dev, swapChain.ColorFormat, DeferredPbrRendererBase.NUM_SAMPLES);
 		}
 		protected override void CreateAndAllocateDescriptors () {
@@ -229,7 +226,7 @@ namespace vkChess
 			using (GraphicPipelineConfig cfg = GraphicPipelineConfig.CreateDefault (VkPrimitiveTopology.TriangleList, DeferredPbrRendererBase.NUM_SAMPLES)) {
 				if (DeferredPbrRendererBase.NUM_SAMPLES != VkSampleCountFlags.SampleCount1) {
 					cfg.multisampleState.sampleShadingEnable = true;
-					cfg.multisampleState.minSampleShading = 0.5f;
+					cfg.multisampleState.minSampleShading = 1.0f;
 				}
 				dslToneMap = new DescriptorSetLayout (dev, 0,
 					new VkDescriptorSetLayoutBinding (0, VkShaderStageFlags.Fragment, VkDescriptorType.CombinedImageSampler),
