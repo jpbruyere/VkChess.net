@@ -38,7 +38,7 @@ namespace vkChess
 		}
 
 		public CommandGroup Commands, IconBar;
-		public Command CMDUndo, CMDOptions, CMDViewBoard, CMDViewMoves, CMDLoadSelectedFile;
+		public Command CMDUndo, CMDOptions, CMDViewBoard, CMDViewMoves, CMDLoadSelectedFile, CMDDeleteSelectedFile;
 		public ToggleCommand CMDToggleHint;
 		void initCommands () {
 			CMDUndo = new ActionCommand ("Undo", () => undo(), "#icons.undo.svg");
@@ -46,6 +46,7 @@ namespace vkChess
 			CMDViewMoves = new ActionCommand ("Moves", () => loadWindow ("#ui.winMoves.crow", this), "#icons.moves.svg");
 			CMDViewBoard = new ActionCommand ("Mini Board", () => loadWindow ("#ui.winBoard.crow", this), "#icons.board.svg");
 			CMDLoadSelectedFile = new ActionCommand ("Load", () => loadGameFromFile (selectedSavedGame), "#icons.load.svg");
+			CMDDeleteSelectedFile = new ActionCommand ("Delete", () => deleteSavedGame (selectedSavedGame), "#icons.warning.svg");
 			CMDToggleHint = new ToggleCommand (this, "Hint", new Binding<bool> ("EnableHint"), "#icons.hint.svg", null, true);
 
 			IconBar = new CommandGroup (CMDOptions, CMDViewBoard, CMDViewMoves, CMDUndo, CMDToggleHint);
@@ -53,7 +54,7 @@ namespace vkChess
 			Commands =  new CommandGroup (
 				new CommandGroup ("Menu",
 					new ActionCommand ("New Game", () => loadWindow ("#ui.winNewGame.crow", this), "#icons.flag.svg"),
-					new ActionCommand ("Save", () => loadWindow ("#ui.save.crow", this), "#icons.save.svg"),
+					new ActionCommand ("Save", () => saveGame(), "#icons.save.svg"),
 					new ActionCommand ("Load", () => loadWindow ("#ui.winLoad.crow", this), "#icons.load.svg"),
 					CMDOptions,
 					CMDViewBoard,
@@ -1071,15 +1072,27 @@ namespace vkChess
 			using (Stream stream = new FileStream (filePath, FileMode.Create))
 				using (StreamWriter sw = new StreamWriter (stream))
 					sw.WriteLine (stockfishPositionCommand);
+			loadWindow("#ui.winMessage.crow", (object)$"Game saved as: {fileName}");
+			new System.Threading.Thread(()=> {
+				System.Threading.Thread.Sleep(4000);
+				closeWindow("#ui.winMessage.crow");
+			}).Start();
 		}
 		void loadGameFromFile (string fullPath) {
-			closeWindow ("#ui.winBoard.crow");
-			if (string.IsNullOrEmpty (fullPath) && !File.Exists (fullPath))
+			closeWindow ("#ui.winLoad.crow");
+			if (!File.Exists (fullPath))
 				return;
 			using (Stream stream = new FileStream (fullPath, FileMode.Open))
 				using (StreamReader sw = new StreamReader (stream))
 					loadGameFromPositionString (sw.ReadLine ());
 		}
+		void deleteSavedGame (string fullPath) {
+			if (!File.Exists (fullPath))
+				return;
+			File.Delete(fullPath);
+			NotifyValueChanged("SavedGames",SavedGames);
+		}
+		
 		void saveOpenedWindowConfig () {
 			StringBuilder sb = new StringBuilder(100);
 			foreach	(Window win in iFace.GraphicTree.OfType<Window>())

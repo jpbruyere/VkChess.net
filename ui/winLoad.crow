@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0"?>
 <Window Caption="Saved Games" Width="80%" Height="80%" Icon="#icons.load.svg" >
-	<VerticalStack>
+	<VerticalStack Margin="5">
 		<ListBox Data="{SavedGames}" SelectedItem="{²SelectedSavedGame}">
 			<Template>
 				<Wrapper Name="ItemsContainer"/>
@@ -13,7 +13,10 @@
 				</ListItem>
 			</ItemTemplate>
 		</ListBox>
-		<Button Command="{CMDLoadSelectedFile}"/>
+		<HorizontalStack Spacing="0" Width="50%" HorizontalAlignment="Right" Background="Jet">
+			<Button Command="{CMDLoadSelectedFile}" Width="50%"/>
+			<Button Command="{CMDDeleteSelectedFile}" Width="50%"/>
+		</HorizontalStack>
 	</VerticalStack>
 </Window>
 

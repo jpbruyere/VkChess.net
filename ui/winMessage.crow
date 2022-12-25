@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Container Fit="true">
+	<Border CornerRadius="15" Background="${WindowBackground}">
+		<Label Text="{}" Margin="40"
+			Foreground="White"
+			Font="serif bold, 28" 
+			Width="Stretched"
+			TextAlignment="Center"/>
+	</Border>
+</Container>
+
